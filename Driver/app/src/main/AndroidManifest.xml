@@ -33,16 +33,19 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="@string/google_maps_key" />
 
-        <activity
-            android:name=".DriverMapsActivity"
-            android:label="@string/title_activity_driver_maps">
+        <activity android:name=".DriverLoginActivity"
+            android:label="@string/title_activity_driver_login">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".DriverLoginActivity"></activity>
+
+        <activity
+            android:name=".DriverMapsActivity"
+            android:label="@string/title_activity_driver_maps">
+        </activity>
+
     </application>
 
 </manifest>
