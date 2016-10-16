@@ -8,9 +8,9 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
-import android.os.Bundle;
 import android.util.Log;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -29,6 +29,7 @@ public class DriverMapsActivity extends FragmentActivity implements OnMapReadyCa
     private GoogleMap mMap;
     LocationManager locationManager;
     String provider;
+    Location location;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,9 +46,9 @@ public class DriverMapsActivity extends FragmentActivity implements OnMapReadyCa
 
         //1. Initialize the locationManager and the provider
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        provider = locationManager.getBestProvider(new Criteria(), false); //To return only enabled providers
+        //provider = locationManager.getBestProvider(new Criteria(), false); //To return only enabled providers
 
-
+        provider = locationManager.getBestProvider(new Criteria(), true); //To return only enabled providers
     }
 
 
@@ -74,7 +75,11 @@ public class DriverMapsActivity extends FragmentActivity implements OnMapReadyCa
             // for ActivityCompat#requestPermissions for more details.
             return;
         }
-        Location location = locationManager.getLastKnownLocation(provider);
+        //Location location = locationManager.getLastKnownLocation(provider);
+        if(provider!= null)
+            location = locationManager.getLastKnownLocation(provider);
+
+        locationManager = new LocationManager();
 
         if(location != null){
             onLocationChanged(location);
