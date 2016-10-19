@@ -1,0 +1,63 @@
+{
+  "project_info": {
+    "project_number": "798421353914",
+    "firebase_url": "https://spartan-safe-rider.firebaseio.com",
+    "project_id": "spartan-safe-rider",
+    "storage_bucket": "spartan-safe-rider.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:798421353914:android:cf63bcedb9060600",
+        "android_client_info": {
+          "package_name": "spartansaferide.sjsu.edu.driver"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "798421353914-uflurrkek8f29d84l8h4laf4dd3pbd0m.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "spartansaferide.sjsu.edu.driver",
+            "certificate_hash": "3381C7ADE465C1FC2DDFDC4913E6B1C7B50F5F39"
+          }
+        },
+        {
+          "client_id": "798421353914-1vbc48343kjion9a0g57g04i56sujkov.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "spartansaferide.sjsu.edu.driver",
+            "certificate_hash": "21C3466AB06C24259EFA84D272C7D989C5EF38E6"
+          }
+        },
+        {
+          "client_id": "798421353914-qtppotmqiemj0hrsl41qrspvpsu4s7mo.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCZR0SjlAMpXcOm2B7IMzWyCsFKoUxdI_w"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "798421353914-qtppotmqiemj0hrsl41qrspvpsu4s7mo.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

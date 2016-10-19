@@ -1,6 +1,7 @@
 package spartansaferide.sjsu.edu.driver;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Criteria;
@@ -10,7 +11,7 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.FragmentActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -18,13 +19,14 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
 
-public class DriverMapsActivity extends FragmentActivity implements OnMapReadyCallback, LocationListener {
+public class DriverMapsActivity extends AppCompatActivity implements OnMapReadyCallback, LocationListener,GoogleMap.OnMarkerClickListener {
 
     private GoogleMap mMap;
     LocationManager locationManager;
@@ -46,9 +48,9 @@ public class DriverMapsActivity extends FragmentActivity implements OnMapReadyCa
 
         //1. Initialize the locationManager and the provider
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        //provider = locationManager.getBestProvider(new Criteria(), false); //To return only enabled providers
+        provider = locationManager.getBestProvider(new Criteria(), false); //To return only enabled providers
 
-        provider = locationManager.getBestProvider(new Criteria(), true); //To return only enabled providers
+        //provider = locationManager.getBestProvider(new Criteria(), true); //To return only enabled providers
     }
 
 
@@ -75,11 +77,11 @@ public class DriverMapsActivity extends FragmentActivity implements OnMapReadyCa
             // for ActivityCompat#requestPermissions for more details.
             return;
         }
-        //Location location = locationManager.getLastKnownLocation(provider);
-        if(provider!= null)
-            location = locationManager.getLastKnownLocation(provider);
-
-        locationManager = new LocationManager();
+        Location location = locationManager.getLastKnownLocation(provider);
+//        if(provider!= null)
+//            location = locationManager.getLastKnownLocation(provider);
+//
+//        locationManager = new LocationManager();
 
         if(location != null){
             onLocationChanged(location);
@@ -106,6 +108,9 @@ public class DriverMapsActivity extends FragmentActivity implements OnMapReadyCa
         //mMap.moveCamera(CameraUpdateFactory.newLatLng(myLocation));
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lat,lng),15));
 
+
+        // Set a listener for marker click.
+        mMap.setOnMarkerClickListener(this);
 
         Geocoder geocoder = new Geocoder(getApplicationContext(), Locale.getDefault());
 
@@ -156,7 +161,7 @@ public class DriverMapsActivity extends FragmentActivity implements OnMapReadyCa
             // for ActivityCompat#requestPermissions for more details.
             return;
         }
-        locationManager.requestLocationUpdates(provider, 400, 1, this);
+        locationManager.requestLocationUpdates(provider, 1000, 1, this);
     }
 
     @Override
@@ -175,5 +180,14 @@ public class DriverMapsActivity extends FragmentActivity implements OnMapReadyCa
         }
         locationManager.removeUpdates(this);
 
+    }
+
+    @Override
+    public boolean onMarkerClick(Marker marker) {
+
+        Intent barcodeScanner = new Intent(DriverMapsActivity.this,BarcodeScannerActivity.class);
+        startActivity(barcodeScanner);
+
+        return true;
     }
 }
