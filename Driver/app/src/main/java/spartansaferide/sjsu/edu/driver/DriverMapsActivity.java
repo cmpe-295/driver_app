@@ -3,6 +3,8 @@ package spartansaferide.sjsu.edu.driver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.location.Address;
 import android.location.Criteria;
 import android.location.Geocoder;
@@ -18,6 +20,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -57,8 +60,8 @@ public class DriverMapsActivity extends AppCompatActivity implements OnMapReadyC
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-
-        Log.i("Status","In onMapReady");
+        mMap.getUiSettings().setZoomControlsEnabled(true);
+        mMap.getUiSettings().setCompassEnabled(true);
 
         // Add a marker in Sydney and move the camera
 //        LatLng sydney = new LatLng(-34, 151);
@@ -104,9 +107,14 @@ public class DriverMapsActivity extends AppCompatActivity implements OnMapReadyC
 
         mMap.clear(); //Clears any previous markers that were set when the location is updated
 
-        mMap.addMarker(new MarkerOptions().position(myLocation).title("My Location"));
+        BitmapDrawable bitmapdraw=(BitmapDrawable)getResources().getDrawable(R.drawable.bus);
+        Bitmap b=bitmapdraw.getBitmap();
+        Bitmap smallMarker = Bitmap.createScaledBitmap(b, 75, 75, false);
+
+        mMap.addMarker(new MarkerOptions().position(myLocation).title("My Location")
+                .icon(BitmapDescriptorFactory.fromBitmap(smallMarker)));
         //mMap.moveCamera(CameraUpdateFactory.newLatLng(myLocation));
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lat,lng),15));
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lat,lng),17));
 
 
         // Set a listener for marker click.
