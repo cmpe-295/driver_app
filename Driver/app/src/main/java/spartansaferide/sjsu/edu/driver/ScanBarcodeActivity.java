@@ -95,7 +95,7 @@ public class ScanBarcodeActivity extends AppCompatActivity {
                     intent.putExtra("barcodes",barcodes.valueAt(0));
                     setResult(CommonStatusCodes.SUCCESS,intent);
 
-                    //Finish the activity and return back to DriverMapsActivity.java
+                    //Finish the activity and return back to MainActivity.java
                     finish();
                 }
             }
