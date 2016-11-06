@@ -169,19 +169,12 @@ public class DriverMapsActivity extends AppCompatActivity
 
         mMap.clear(); //Clears any previous markers that were set when the location is updated
 
-
         BitmapDrawable bitmapdraw=(BitmapDrawable)getResources().getDrawable(R.drawable.bus);
         Bitmap b=bitmapdraw.getBitmap();
         Bitmap smallMarker = Bitmap.createScaledBitmap(b, 75, 75, false);
 
-        mMap.addMarker(new MarkerOptions().position(myLocation).title("My Location")
+        mMap.addMarker(new MarkerOptions().position(myLocation).title("Shuttle Location")
                 .icon(BitmapDescriptorFactory.fromBitmap(smallMarker)));
-
-        mMap.addMarker(new MarkerOptions()
-                .position(myLocation)
-                .title("Shuttle Location"));
-
-        mMap.addMarker(new MarkerOptions().position(myLocation).title("My Location"));
 
         //mMap.moveCamera(CameraUpdateFactory.newLatLng(myLocation));
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lat,lng),15));
