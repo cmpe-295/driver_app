@@ -15,6 +15,7 @@ import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.MenuItem;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -56,6 +57,20 @@ public class DriverMapsActivity extends AppCompatActivity implements OnMapReadyC
         //provider = locationManager.getBestProvider(new Criteria(), true); //To return only enabled providers
     }
 
+
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
@@ -113,8 +128,16 @@ public class DriverMapsActivity extends AppCompatActivity implements OnMapReadyC
 
         mMap.addMarker(new MarkerOptions().position(myLocation).title("My Location")
                 .icon(BitmapDescriptorFactory.fromBitmap(smallMarker)));
+
+        mMap.addMarker(new MarkerOptions()
+                .position(myLocation)
+                .title("Shuttle Location"));
+
+
+        mMap.addMarker(new MarkerOptions().position(myLocation).title("My Location"));
+
         //mMap.moveCamera(CameraUpdateFactory.newLatLng(myLocation));
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lat,lng),17));
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lat,lng),15));
 
 
         // Set a listener for marker click.
