@@ -13,9 +13,19 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+
 import android.view.MenuItem;
+
+import android.support.design.widget.NavigationView;
+import android.support.v4.view.GravityCompat;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -30,22 +40,42 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
 
-public class DriverMapsActivity extends AppCompatActivity implements OnMapReadyCallback, LocationListener,GoogleMap.OnMarkerClickListener {
+public class DriverMapsActivity extends AppCompatActivity
+        implements NavigationView.OnNavigationItemSelectedListener,OnMapReadyCallback, LocationListener,GoogleMap.OnMarkerClickListener {
 
     private GoogleMap mMap;
     LocationManager locationManager;
     String provider;
     Location location;
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_driver_maps);
+        setContentView(R.layout.activity_driver_main);
 
-        Log.i("Status", "in onCreate");
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
 
+//        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+//        fab.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+//                        .setAction("Action", null).show();
+//            }
+//        });
 
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+        drawer.setDrawerListener(toggle);
+        toggle.syncState();
+
+        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        navigationView.setNavigationItemSelectedListener(this);
+
+        //new
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
@@ -53,9 +83,24 @@ public class DriverMapsActivity extends AppCompatActivity implements OnMapReadyC
         //1. Initialize the locationManager and the provider
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         provider = locationManager.getBestProvider(new Criteria(), false); //To return only enabled providers
-
-        //provider = locationManager.getBestProvider(new Criteria(), true); //To return only enabled providers
     }
+
+    @Override
+    public void onBackPressed() {
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        if (drawer.isDrawerOpen(GravityCompat.START)) {
+            drawer.closeDrawer(GravityCompat.START);
+        } else {
+            super.onBackPressed();
+        }
+    }
+
+//    @Override
+//    public boolean onCreateOptionsMenu(Menu menu) {
+//        // Inflate the menu; this adds items to the action bar if it is present.
+//        getMenuInflater().inflate(R.menu.main, menu);
+//        return true;
+//    }
 
 
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -72,38 +117,40 @@ public class DriverMapsActivity extends AppCompatActivity implements OnMapReadyC
         return super.onOptionsItemSelected(item);
     }
 
+    @SuppressWarnings("StatementWithEmptyBody")
     @Override
-    public void onMapReady(GoogleMap googleMap) {
-        mMap = googleMap;
-        mMap.getUiSettings().setZoomControlsEnabled(true);
-        mMap.getUiSettings().setCompassEnabled(true);
+    public boolean onNavigationItemSelected(MenuItem item) {
+        // Handle navigation view item clicks here.
+        int id = item.getItemId();
 
-        // Add a marker in Sydney and move the camera
-//        LatLng sydney = new LatLng(-34, 151);
-//        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-//        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+        if (id == R.id.rideHistory) {
+            Toast.makeText(this, "Ride History", Toast.LENGTH_SHORT).show();
+            // Handle the camera action
+        } else if (id == R.id.logout) {
 
+            logOut();
+            Intent logout = new Intent(DriverMapsActivity.this,DriverLoginActivity.class);
+            startActivity(logout);
+            Toast.makeText(this,"Logged Out",Toast.LENGTH_SHORT).show();
 
-
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
         }
-        Location location = locationManager.getLastKnownLocation(provider);
-//        if(provider!= null)
-//            location = locationManager.getLastKnownLocation(provider);
+//        else if (id == R.id.nav_slideshow) {
 //
-//        locationManager = new LocationManager();
+//        } else if (id == R.id.nav_manage) {
+//
+//        } else if (id == R.id.nav_share) {
+//
+//        } else if (id == R.id.nav_send) {
+//
+//        }
 
-        if(location != null){
-            onLocationChanged(location);
-        }
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        drawer.closeDrawer(GravityCompat.START);
+        return true;
+    }
+
+    private void logOut() {
+        //To make API Call for logging out the user
     }
 
     @Override
@@ -122,6 +169,7 @@ public class DriverMapsActivity extends AppCompatActivity implements OnMapReadyC
 
         mMap.clear(); //Clears any previous markers that were set when the location is updated
 
+
         BitmapDrawable bitmapdraw=(BitmapDrawable)getResources().getDrawable(R.drawable.bus);
         Bitmap b=bitmapdraw.getBitmap();
         Bitmap smallMarker = Bitmap.createScaledBitmap(b, 75, 75, false);
@@ -132,7 +180,6 @@ public class DriverMapsActivity extends AppCompatActivity implements OnMapReadyC
         mMap.addMarker(new MarkerOptions()
                 .position(myLocation)
                 .title("Shuttle Location"));
-
 
         mMap.addMarker(new MarkerOptions().position(myLocation).title("My Location"));
 
@@ -160,7 +207,6 @@ public class DriverMapsActivity extends AppCompatActivity implements OnMapReadyC
         } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
 
     @Override
@@ -176,6 +222,32 @@ public class DriverMapsActivity extends AppCompatActivity implements OnMapReadyC
     @Override
     public void onProviderDisabled(String provider) {
 
+    }
+
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        mMap = googleMap;
+        mMap.getUiSettings().setZoomControlsEnabled(true);
+        mMap.getUiSettings().setCompassEnabled(true);
+
+        Log.i("Status","In onMapReady");
+
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+        Location location = locationManager.getLastKnownLocation(provider);
+
+
+        if(location != null){
+            onLocationChanged(location);
+        }
     }
 
     @Override

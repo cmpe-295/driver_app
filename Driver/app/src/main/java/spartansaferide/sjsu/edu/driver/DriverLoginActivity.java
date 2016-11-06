@@ -1,11 +1,13 @@
 package spartansaferide.sjsu.edu.driver;
 
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -48,6 +50,11 @@ public class DriverLoginActivity extends AppCompatActivity {
     }
 
     public void loginUser(View view){
+
+        //Hide Keypad after clicking Login Button
+        InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+
         // Get Email Edit View Value
         String email = emailET.getText().toString();
         // Get Password Edit View Value
@@ -86,6 +93,7 @@ public class DriverLoginActivity extends AppCompatActivity {
             @Override
             public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
 
+                //Hide Progress Bar after Successful Login
                 prgDialog.hide();
 
                 String authCode = new String(responseBody);
@@ -119,6 +127,7 @@ public class DriverLoginActivity extends AppCompatActivity {
      * Method which navigates from Login Activity to Home Activity
      */
     public void navigatetoHomeActivity(){
+        //Intent homeIntent = new Intent(getApplicationContext(),DriverMapsActivity1.class);
         Intent homeIntent = new Intent(getApplicationContext(),DriverMapsActivity.class);
         homeIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         startActivity(homeIntent);
