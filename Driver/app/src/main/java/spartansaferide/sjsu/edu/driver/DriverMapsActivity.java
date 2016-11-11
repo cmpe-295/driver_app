@@ -257,7 +257,11 @@ public class DriverMapsActivity extends AppCompatActivity
             // for ActivityCompat#requestPermissions for more details.
             return;
         }
-        locationManager.requestLocationUpdates(provider, 1000, 1, this);
+
+        //Send location updates every 5 seconds and for every change in 100 meters in distance
+        locationManager.requestLocationUpdates(provider, 5000, 100, this);
+
+        //Call "update_driver_location" API to update the location to the server
     }
 
     @Override
