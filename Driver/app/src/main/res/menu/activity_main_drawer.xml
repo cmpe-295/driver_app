@@ -22,10 +22,10 @@
         -->
 
 
-        <item
-            android:id="@+id/rideHistory"
-            android:icon="@drawable/ic_history_black_24dp"
-            android:title="Ride History" />
+        <!--<item-->
+            <!--android:id="@+id/rideHistory"-->
+            <!--android:icon="@drawable/ic_history_black_24dp"-->
+            <!--android:title="Ride History" />-->
 
         <item
             android:id="@+id/logout"
