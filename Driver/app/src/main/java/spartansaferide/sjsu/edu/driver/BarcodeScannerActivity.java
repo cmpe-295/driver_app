@@ -28,6 +28,8 @@ public class BarcodeScannerActivity extends AppCompatActivity {
 
         barcodeResult = (TextView) findViewById(R.id.barcode_result);
         studentid = (EditText) findViewById(R.id.studentid);
+
+        getSupportActionBar().setTitle("Scan/Enter Student Barcode");
     }
 
     /* Add a click event to the scan_barcode button to launch the ScanBarcodeActivity */
@@ -46,7 +48,10 @@ public class BarcodeScannerActivity extends AppCompatActivity {
                     //Check for the barcode and Display the value
                     Barcode barcode = data.getParcelableExtra("barcodes");
                     Log.d("test",barcode.displayValue);
+
                     barcodeResult.setText("Student ID : " + barcode.displayValue);
+                    validateStudentId(barcode.toString());
+
                 } else {
                     barcodeResult.setText("No barcode found");
                 }
@@ -57,20 +62,26 @@ public class BarcodeScannerActivity extends AppCompatActivity {
         }
     }
 
+
     public void pickedStudent(View view){
 
         String sid=  studentid.getText().toString();
+
+        validateStudentId(sid);
+
+    }
+
+    public void validateStudentId(String id){
+
         Pattern p = Pattern.compile("[0-9]{9}");
-        Matcher m = p.matcher(sid);
+        Matcher m = p.matcher(id);
 
         if(m.matches()){
+
             Toast.makeText(getBaseContext(),"Valid studentid",Toast.LENGTH_SHORT).show();
         }
         else {
             Toast.makeText(getBaseContext(),"Invalid studentid",Toast.LENGTH_SHORT).show();
         }
-
-
-
     }
 }
