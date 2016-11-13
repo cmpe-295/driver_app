@@ -1,6 +1,7 @@
 package spartansaferide.sjsu.edu.driver;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -12,7 +13,9 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
+import android.support.v7.app.AlertDialog;
 import android.util.Log;
 
 import android.view.MenuItem;
@@ -47,7 +50,7 @@ public class DriverMapsActivity extends AppCompatActivity
     LocationManager locationManager;
     String provider;
     Location location;
-
+    String authCode;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,6 +69,10 @@ public class DriverMapsActivity extends AppCompatActivity
 //            }
 //        });
 
+        //Fetch the authCode stored in SharedPreferences
+        authCode = getApplicationContext().getSharedPreferences("spartansaferide.sjsu.edu.driver",Context.MODE_PRIVATE).getString("authcode","");
+        Log.d("Status","Auth Code in MapsActivity is"+authCode);
+
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
@@ -80,9 +87,42 @@ public class DriverMapsActivity extends AppCompatActivity
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
+        //Check if Location is enabled. If location services are turned off, then this function requests the user to turn them on
+        checkGPSStatus();
+
         //1. Initialize the locationManager and the provider
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         provider = locationManager.getBestProvider(new Criteria(), false); //To return only enabled providers
+    }
+
+    private void checkGPSStatus() {
+        LocationManager locationManager = null;
+        boolean gps_enabled = false;
+        boolean network_enabled = false;
+        if ( locationManager == null ) {
+            locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        }
+        try {
+            gps_enabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+        } catch (Exception ex){}
+        try {
+            network_enabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+        } catch (Exception ex){}
+        if ( !gps_enabled && !network_enabled ){
+            AlertDialog.Builder dialog = new AlertDialog.Builder(DriverMapsActivity.this);
+            dialog.setMessage("GPS is not enabled. Tap on OK to Enable the GPS");
+            dialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    //this will navigate user to the device location settings screen
+                    Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                    startActivity(intent);
+                }
+            });
+            AlertDialog alert = dialog.create();
+            alert.show();
+        }
     }
 
     @Override

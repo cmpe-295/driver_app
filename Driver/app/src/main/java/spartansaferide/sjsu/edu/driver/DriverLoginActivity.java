@@ -3,12 +3,14 @@ package spartansaferide.sjsu.edu.driver;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -29,6 +31,8 @@ public class DriverLoginActivity extends AppCompatActivity {
     // Passwprd Edit View Object
     EditText pwdET;
 
+    //ImageView checkMark;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -46,6 +50,9 @@ public class DriverLoginActivity extends AppCompatActivity {
         prgDialog.setMessage("Please wait...");
         // Set Cancelable as False
         prgDialog.setCancelable(false);
+
+//        checkMark = (ImageView) findViewById(R.id.checkmark);
+//        checkMark.animate().alpha(0f);
 
     }
 
@@ -95,9 +102,17 @@ public class DriverLoginActivity extends AppCompatActivity {
 
                 //Hide Progress Bar after Successful Login
                 prgDialog.hide();
+                //checkMark.animate().alpha(1f).setDuration(10000);
+                //checkMark.animate().rotation(1800f).setDuration(10000);
 
                 String authCode = new String(responseBody);
-                Log.d("Status","Auth Code is"+authCode);
+                //Log.d("Status","Auth Code is"+authCode);
+
+                SharedPreferences sharedPreferences = getApplicationContext().getSharedPreferences("spartansaferide.sjsu.edu.driver",Context.MODE_PRIVATE);
+                sharedPreferences.edit().putString("authcode",authCode).apply();
+
+                Log.d("Status","Auth Code in LoginActivity is"+sharedPreferences.getString("authcode",""));
+
                 navigatetoHomeActivity();
 
             }
