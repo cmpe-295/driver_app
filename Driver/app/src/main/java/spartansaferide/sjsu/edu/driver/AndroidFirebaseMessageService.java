@@ -1,5 +1,11 @@
 package spartansaferide.sjsu.edu.driver;
 
+import android.app.Service;
+import android.content.Intent;
+import android.util.Log;
+
+import com.google.firebase.messaging.FirebaseMessagingService;
+import com.google.firebase.messaging.RemoteMessage;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -8,7 +14,6 @@ import android.media.RingtoneManager;
 import android.net.Uri;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
-
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 
@@ -36,7 +41,7 @@ public class AndroidFirebaseMessageService extends FirebaseMessagingService {
 
         Uri notificationSoundURI = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
         NotificationCompat.Builder mNotificationBuilder = new NotificationCompat.Builder( this)
-                .setSmallIcon(R.mipmap.spartan_logo)
+                .setSmallIcon(R.mipmap.spartanlogo)
                 .setContentTitle("SafeRide")
                 .setContentText(messageBody)
                 .setAutoCancel( true )

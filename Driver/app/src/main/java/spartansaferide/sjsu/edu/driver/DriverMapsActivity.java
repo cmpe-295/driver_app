@@ -28,6 +28,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -40,6 +42,8 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.io.IOException;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -50,6 +54,14 @@ public class DriverMapsActivity extends AppCompatActivity
     LocationManager locationManager;
     String provider;
     Location location;
+    static Context context;
+    ArrayList<LatLng> stops=new ArrayList<LatLng>(8);
+    ListView rides;
+    List<Address> listAddresses;
+    ArrayList<String> stoparr= new ArrayList<String >(8);
+    LatLng destination=new LatLng(37.333286, -121.879909);
+    LatLng current_location;
+    String url="https://maps.googleapis.com/maps/api/directions/json?origin=37.333540,-121.884589&destination=37.338716,-121.879794&waypoints=37.341877,-121.887195|37.329346,-121.871347";
     String authCode;
 
     @Override
@@ -59,6 +71,16 @@ public class DriverMapsActivity extends AppCompatActivity
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        context = getApplicationContext();
+        LatLng loc1 = new LatLng(37.338716, -121.879794);
+        stops.add(loc1);
+        loc1 = new LatLng(37.341877, -121.887195);
+        stops.add(loc1);
+        loc1 = new LatLng (37.329346, -121.871347);
+        stops.add(loc1);
+        rides = (ListView) findViewById(R.id.rides);
+
+
 
 //        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
 //        fab.setOnClickListener(new View.OnClickListener() {
@@ -135,32 +157,13 @@ public class DriverMapsActivity extends AppCompatActivity
         }
     }
 
-
-//    public boolean onOptionsItemSelected(MenuItem item) {
-//        // Handle action bar item clicks here. The action bar will
-//        // automatically handle clicks on the Home/Up button, so long
-//        // as you specify a parent activity in AndroidManifest.xml.
-//        int id = item.getItemId();
-//
-//        //noinspection SimplifiableIfStatement
-//        if (id == R.id.action_settings) {
-//            return true;
-//        }
-//
-//        return super.onOptionsItemSelected(item);
-//    }
-
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
         // Handle navigation view item clicks here.
         int id = item.getItemId();
 
-//        if (id == R.id.rideHistory) {
-//            Toast.makeText(this, "Ride History", Toast.LENGTH_SHORT).show();
-//            // Handle the camera action
-//        }
-         if (id == R.id.logout) {
+        if (id == R.id.logout) {
 
             logOut();
             Intent logout = new Intent(DriverMapsActivity.this,DriverLoginActivity.class);
@@ -168,15 +171,6 @@ public class DriverMapsActivity extends AppCompatActivity
             Toast.makeText(this,"Logged Out",Toast.LENGTH_SHORT).show();
 
         }
-//        else if (id == R.id.nav_slideshow) {
-//
-//        } else if (id == R.id.nav_manage) {
-//
-//        } else if (id == R.id.nav_share) {
-//
-//        } else if (id == R.id.nav_send) {
-//
-//        }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
@@ -195,15 +189,16 @@ public class DriverMapsActivity extends AppCompatActivity
         //2. Get the current location
         Double lat = location.getLatitude();
         Double lng = location.getLongitude();
+        current_location=new LatLng(lat, lng);
 
         Log.i("Status", "Latitude is: "+ lat.toString());
         Log.i("Status", "Longitude is: "+ lng.toString());
 
         LatLng myLocation = new LatLng(lat,lng);
 
-        mMap.clear(); //Clears any previous markers that were set when the location is updated
+       // mMap.clear(); //Clears any previous markers that were set when the location is updated
 
-        BitmapDrawable bitmapdraw=(BitmapDrawable)getResources().getDrawable(R.drawable.bus);
+        BitmapDrawable bitmapdraw=(BitmapDrawable)getResources().getDrawable(R.drawable.bus_icon);
         Bitmap b=bitmapdraw.getBitmap();
         Bitmap smallMarker = Bitmap.createScaledBitmap(b, 75, 75, false);
 
@@ -217,23 +212,7 @@ public class DriverMapsActivity extends AppCompatActivity
         // Set a listener for marker click.
         mMap.setOnMarkerClickListener(this);
 
-        Geocoder geocoder = new Geocoder(getApplicationContext(), Locale.getDefault());
 
-        try {
-            List<Address> listAddresses = geocoder.getFromLocation(lat,lng, 1);
-
-            //Check if we have atleast gt one address
-
-            if(listAddresses != null && listAddresses.size() >0){
-                //Get the results
-
-                Log.i("Place Info ", listAddresses.get(0).toString());
-            }
-
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     @Override
@@ -271,10 +250,45 @@ public class DriverMapsActivity extends AppCompatActivity
         }
         Location location = locationManager.getLastKnownLocation(provider);
 
+        //populate list of stops
+        updateStops();
 
         if(location != null){
             onLocationChanged(location);
         }
+    }
+
+    public void updateStops(){
+        Geocoder geocoder = new Geocoder(getApplicationContext(),Locale.getDefault());
+
+        for(LatLng i : stops) {
+            try {
+                listAddresses = geocoder.getFromLocation(i.latitude, i.longitude, 1);
+                mMap.addMarker(new MarkerOptions()
+                        .position(new LatLng(i.latitude, i.longitude))
+                        .title("H"));
+                stoparr.add(listAddresses.get(0).getAddressLine(0).toString());
+
+                //Check if we have atleast gt one address
+
+                if (listAddresses != null && listAddresses.size() > 0) {
+                    //Get the results
+
+                    Log.i("Place Info ", listAddresses.get(0).getAddressLine(0).toString());
+                }
+
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(
+                this,
+                android.R.layout.simple_list_item_1,
+                stoparr );
+
+        rides.setAdapter(arrayAdapter);
     }
 
     @Override
