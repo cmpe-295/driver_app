@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                xmlns:tools="http://schemas.android.com/tools"
+    xmlns:tools="http://schemas.android.com/tools"
                 android:id="@+id/activity_driver_login"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
@@ -14,7 +14,10 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="10dip" >
+        android:padding="10dip"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true">
 
         <TextView
             android:layout_width="fill_parent"
@@ -28,7 +31,7 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="5dip"
-            android:text="Email" />
+            android:text="@string/email" />
 
 
         <EditText
@@ -69,6 +72,15 @@
             android:text="Login"
             android:textColor="#fff" />
 
+        <!--<ImageView-->
+            <!--android:layout_width="50dp"-->
+            <!--android:layout_height="50dp"-->
+            <!--app:srcCompat="@drawable/checkmark"-->
+            <!--android:id="@+id/checkmark"-->
+            <!--android:layout_gravity="center_vertical|center_horizontal"-->
+            <!--android:contentDescription="" />-->
+
     </LinearLayout>
+
 
 </RelativeLayout>

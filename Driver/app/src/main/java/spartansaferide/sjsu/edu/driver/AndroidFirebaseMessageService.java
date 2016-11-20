@@ -41,7 +41,7 @@ public class AndroidFirebaseMessageService extends FirebaseMessagingService {
 
         Uri notificationSoundURI = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
         NotificationCompat.Builder mNotificationBuilder = new NotificationCompat.Builder( this)
-                .setSmallIcon(R.mipmap.spartanlogo)
+                .setSmallIcon(R.mipmap.spartan_logo)
                 .setContentTitle("SafeRide")
                 .setContentText(messageBody)
                 .setAutoCancel( true )
@@ -52,6 +52,9 @@ public class AndroidFirebaseMessageService extends FirebaseMessagingService {
                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
         notificationManager.notify(0, mNotificationBuilder.build());
+
+
+
     }
 
 }

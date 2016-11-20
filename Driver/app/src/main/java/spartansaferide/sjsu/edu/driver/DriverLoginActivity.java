@@ -142,7 +142,6 @@ public class DriverLoginActivity extends AppCompatActivity {
      * Method which navigates from Login Activity to Home Activity
      */
     public void navigatetoHomeActivity(){
-        //Intent homeIntent = new Intent(getApplicationContext(),DriverMapsActivity1.class);
         Intent homeIntent = new Intent(getApplicationContext(),DriverMapsActivity.class);
         homeIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         startActivity(homeIntent);
