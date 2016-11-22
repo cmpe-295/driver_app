@@ -31,6 +31,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -43,6 +44,7 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.firebase.iid.FirebaseInstanceId;
 
 import org.json.JSONObject;
 
@@ -79,9 +81,16 @@ public class DriverMapsActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_driver_main);
 
+        String refreshedToken = FirebaseInstanceId.getInstance().getToken();
+        Log.d("TokenID", "Refreshed token: " + refreshedToken);
+
         Toolbar toolbar = (Toolbar) findViewById(R.id.myToolbar);
         setSupportActionBar(toolbar);
         context = getApplicationContext();
+        TextView notification_field = (TextView) findViewById(R.id.notification);
+
+
+        //sample data
         LatLng loc1 = new LatLng(37.338716, -121.879794);
         stops.add(loc1);
         loc1 = new LatLng(37.341877, -121.887195);
@@ -89,6 +98,7 @@ public class DriverMapsActivity extends AppCompatActivity
         loc1 = new LatLng(37.329346, -121.871347);
         stops.add(loc1);
         rides = (ListView) findViewById(R.id.rides);
+
 
         BitmapDrawable bitmapdraw = (BitmapDrawable) getResources().getDrawable(R.drawable.bus_icon);
         Bitmap b = bitmapdraw.getBitmap();
