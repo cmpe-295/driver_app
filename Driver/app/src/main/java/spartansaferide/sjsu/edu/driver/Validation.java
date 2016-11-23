@@ -10,7 +10,7 @@ public class Validation {
     //Email Pattern
     //private static final String EMAIL_PATTERN = "^[A-Za-z]+.[A-Za-z0-9]+@sjsu\\.edu";
 
-    private static final String EMAIL_PATTERN = "^[A-Za-z]+.[A-Za-z0-9]+@gmail\\.com";
+    private static final String EMAIL_PATTERN = "^[A-Za-z]+.[A-Za-z0-9]+@sjsu\\.edu";
 
     public static boolean validate(String email) {
         pattern = Pattern.compile(EMAIL_PATTERN);
