@@ -15,6 +15,7 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.Settings;
@@ -331,7 +332,7 @@ public class DriverMapsActivity extends AppCompatActivity
             try {
                 listAddresses = geocoder.getFromLocation(i.location.latitude, i.location.longitude, 1);
 
-                stoparr.add((i.type+" "+i.student_id+" "+i.name));
+                stoparr.add((i.type.toUpperCase()+","+i.student_id+","+i.name.toUpperCase()));
 
             } catch (IOException e) {
                 e.printStackTrace();
@@ -353,6 +354,21 @@ public class DriverMapsActivity extends AppCompatActivity
                 Toast.makeText(DriverMapsActivity.this, "Option Selected: " + item, Toast.LENGTH_LONG).show();
 
                 displayPoints(id);
+            }
+        });
+
+        rides.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> adapterView, View view, int i, long l) {
+
+                LatLng navigate_loc = stops.get(i).location;
+
+                Uri gmmIntentUri = Uri.parse("google.navigation:q="+navigate_loc.latitude+","+navigate_loc.longitude);
+                Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
+                mapIntent.setPackage("com.google.android.apps.maps");
+                startActivity(mapIntent);
+
+                return true;
             }
         });
     }
@@ -490,8 +506,7 @@ public class DriverMapsActivity extends AppCompatActivity
             return data;
         }
 
-        // Executes in UI thread, after the execution of
-        // doInBackground()
+        // Executes in UI thread, after the execution of doInBackground()
         @Override
         protected void onPostExecute(String result) {
             super.onPostExecute(result);
@@ -581,13 +596,11 @@ public class DriverMapsActivity extends AppCompatActivity
 
         try {
 
-            //DriverMapsActivity D = new DriverMapsActivity();
             JSONObject newNotification = new JSONObject(N);
             JSONArray path = newNotification.getJSONArray("path");
             for (int i=1; i<path.length(); i++){
                 //new StopInformation
                 StopInformation stop_obj= new StopInformation();
-
 
                 JSONObject obj = path.getJSONObject(i);
                 stop_obj.type=obj.getString("type");
