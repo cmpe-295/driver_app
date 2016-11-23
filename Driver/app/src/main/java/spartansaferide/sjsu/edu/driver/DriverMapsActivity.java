@@ -4,6 +4,7 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -46,6 +47,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.firebase.iid.FirebaseInstanceId;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
@@ -58,6 +60,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+
+import com.loopj.android.http.AsyncHttpClient;
+import com.loopj.android.http.AsyncHttpResponseHandler;
+import com.loopj.android.http.RequestParams;
+
+import cz.msebera.android.httpclient.Header;
 
 public class DriverMapsActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback, LocationListener {
@@ -75,6 +83,8 @@ public class DriverMapsActivity extends AppCompatActivity
     LatLng current_location;
     String authCode;
     Bitmap smallMarker;
+    JSONObject authObj;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -115,8 +125,18 @@ public class DriverMapsActivity extends AppCompatActivity
 
         } else {
             //Fetch the authCode stored in SharedPreferences
-            authCode = getApplicationContext().getSharedPreferences("spartansaferide.sjsu.edu.driver", Context.MODE_PRIVATE).getString("authcode", "");
+            authCode =  getApplicationContext().getSharedPreferences("spartansaferide.sjsu.edu.driver", Context.MODE_PRIVATE).getString("authcode", "");
             Log.d("Status", "Auth Code in MapsActivity is" + authCode);
+            try {
+                authObj = new JSONObject(authCode);
+                RequestParams params = new RequestParams();
+                params.put("token",refreshedToken);
+                invokeWS(params, authObj);
+//                authObj.getString("token");
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
 
             DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
             ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -139,6 +159,39 @@ public class DriverMapsActivity extends AppCompatActivity
             locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
             provider = locationManager.getBestProvider(new Criteria(), false); //To return only enabled providers
         }
+    }
+
+    public void invokeWS(RequestParams params, JSONObject authObj) throws JSONException {
+
+        AsyncHttpClient client = new AsyncHttpClient();
+        client.addHeader("Authorization","Token "+authObj.getString("token"));
+        //client.post("https://bjnkozckss.localtunnel.me/update_device_token/",params ,new AsyncHttpResponseHandler() {
+        client.post("http://saferide.nagkumar.com/update_device_token/",params ,new AsyncHttpResponseHandler() {
+
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
+
+                Log.d("Call","Status Code"+statusCode);
+
+            }
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
+
+                // When Http response code is '404'
+                if(statusCode == 404){
+                    Toast.makeText(getApplicationContext(), "Requested resource not found", Toast.LENGTH_LONG).show();
+                }
+                // When Http response code is '500'
+                else if(statusCode == 500){
+                    Toast.makeText(getApplicationContext(), "Something went wrong at server end", Toast.LENGTH_LONG).show();
+                }
+                // When Http response code other than 404, 500
+                else{
+                    Toast.makeText(getApplicationContext(), "Unexpected Error occcured! [Most common Error: Device might not be connected to Internet or remote server is not up and running]", Toast.LENGTH_LONG).show();
+                }
+            }
+        });
     }
 
     private void checkGPSStatus() {
@@ -299,10 +352,8 @@ public class DriverMapsActivity extends AppCompatActivity
                 Toast.makeText(DriverMapsActivity.this, "Option Selected: " + item, Toast.LENGTH_LONG).show();
 
                 displayPoints(id);
-
             }
         });
-
     }
 
     private void displayPoints(long id) {
@@ -351,7 +402,6 @@ public class DriverMapsActivity extends AppCompatActivity
             return;
         }
         locationManager.removeUpdates(this);
-
     }
 
     private String getDirectionsUrl(LatLng origin, LatLng dest) {
