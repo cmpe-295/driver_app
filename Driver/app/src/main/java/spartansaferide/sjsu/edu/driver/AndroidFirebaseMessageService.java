@@ -17,12 +17,15 @@ import android.util.Log;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 
+import org.json.JSONObject;
+
 /**
  * Created by priyanka.tummala on 10/18/16.
  */
 public class AndroidFirebaseMessageService extends FirebaseMessagingService {
 
     private static final String TAG = "SafeRideMsgService";
+    DriverMapsActivity driverMaps;
 
     @Override
     public void onMessageReceived(RemoteMessage remoteMessage) {
@@ -31,7 +34,11 @@ public class AndroidFirebaseMessageService extends FirebaseMessagingService {
         Log.d(TAG, "Notification Message Body: " + remoteMessage.getNotification().getBody());
         //create notification
         createNotification(remoteMessage.getNotification().getBody());
-    }
+        String notification_body = remoteMessage.getNotification().getBody();
+        driverMaps.parseNotifcation(notification_body);
+        }
+
+
 
     private void createNotification( String messageBody) {
         Intent intent = new Intent( this , DriverMapsActivity.class );
@@ -52,9 +59,11 @@ public class AndroidFirebaseMessageService extends FirebaseMessagingService {
                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
         notificationManager.notify(0, mNotificationBuilder.build());
+    }
 
 
-
+    public interface SetRoute{
+        public void parseNotifcation(String N);
     }
 
 }

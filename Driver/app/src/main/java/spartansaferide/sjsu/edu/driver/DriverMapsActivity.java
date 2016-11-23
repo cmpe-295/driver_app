@@ -47,6 +47,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.firebase.iid.FirebaseInstanceId;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -68,21 +69,26 @@ import com.loopj.android.http.RequestParams;
 import cz.msebera.android.httpclient.Header;
 
 public class DriverMapsActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback, LocationListener {
+        implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback, LocationListener,AndroidFirebaseMessageService.SetRoute {
 
     private GoogleMap mMap;
     LocationManager locationManager;
     String provider;
     Location location;
     static Context context;
-    ArrayList<LatLng> stops = new ArrayList<LatLng>(8);
+    static ArrayList<StopInformation> stops = new ArrayList<StopInformation>(8);
     ListView rides;
     List<Address> listAddresses;
     ArrayList<String> stoparr = new ArrayList<String>(8);
-    //LatLng destination=new LatLng(37.333286, -121.879909);
     LatLng current_location;
     String authCode;
     Bitmap smallMarker;
+    String pickColor="#57BFD2";
+    String dropColor = "#F29525";
+    String notification = "{\"path\":\n" +
+            "[{\"eta\":0,\"user\":\"driver\",\"latLng\":{\"lng\":-121.879737,\"lat\":37.333163}},\n" +
+            "\t{\"ride_id\":10,\"eta\":135,\"type\":\"pick\",\"user\":{\"latitude\":null,\"sjsu_id\":\"010095345\",\"last_name\":\"Arkalgud\",\"id\":1,\"first_name\":\"Nagkumar\",\"longitude\":null},\"latLng\":{\"lng\":-121.879737,\"lat\":37.333163}},{\"ride_id\":4,\"eta\":237,\"type\":\"pick\",\"user\":{\"latitude\":null,\"sjsu_id\":\"1111111\",\"last_name\":\"gupta\",\"id\":3,\"first_name\":\"balaji\",\"longitude\":null},\"latLng\":{\"lng\":-121.873226,\"lat\":37.331983}},{\"ride_id\":3,\"eta\":237,\"type\":\"pick\",\"user\":{\"latitude\":null,\"sjsu_id\":\"10101010\",\"last_name\":\"jayadev\",\"id\":2,\"first_name\":\"varsha\",\"longitude\":null},\"latLng\":{\"lng\":-121.883569,\"lat\":37.327444}}]}";
+
     JSONObject authObj;
 
 
@@ -97,16 +103,7 @@ public class DriverMapsActivity extends AppCompatActivity
         Toolbar toolbar = (Toolbar) findViewById(R.id.myToolbar);
         setSupportActionBar(toolbar);
         context = getApplicationContext();
-        TextView notification_field = (TextView) findViewById(R.id.notification);
 
-
-        //sample data
-        LatLng loc1 = new LatLng(37.338716, -121.879794);
-        stops.add(loc1);
-        loc1 = new LatLng(37.341877, -121.887195);
-        stops.add(loc1);
-        loc1 = new LatLng(37.329346, -121.871347);
-        stops.add(loc1);
         rides = (ListView) findViewById(R.id.rides);
 
 
@@ -158,6 +155,9 @@ public class DriverMapsActivity extends AppCompatActivity
             //1. Initialize the locationManager and the provider
             locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
             provider = locationManager.getBestProvider(new Criteria(), false); //To return only enabled providers
+
+            parseNotifcation(notification);
+
         }
     }
 
@@ -228,6 +228,7 @@ public class DriverMapsActivity extends AppCompatActivity
 
     @Override
     public void onBackPressed() {
+        super.onBackPressed();
     }
 
     @SuppressWarnings("StatementWithEmptyBody")
@@ -326,11 +327,11 @@ public class DriverMapsActivity extends AppCompatActivity
         //To populate this list from the MapQuest JSON response
         Geocoder geocoder = new Geocoder(getApplicationContext(), Locale.getDefault());
 
-        for (LatLng i : stops) {
+        for (StopInformation i : stops) {
             try {
-                listAddresses = geocoder.getFromLocation(i.latitude, i.longitude, 1);
+                listAddresses = geocoder.getFromLocation(i.location.latitude, i.location.longitude, 1);
 
-                stoparr.add((listAddresses.get(0).getAddressLine(0).toString()) + "," + (listAddresses.get(0).getAddressLine(1).toString()));
+                stoparr.add((i.type+" "+i.student_id+" "+i.name));
 
             } catch (IOException e) {
                 e.printStackTrace();
@@ -357,7 +358,7 @@ public class DriverMapsActivity extends AppCompatActivity
     }
 
     private void displayPoints(long id) {
-        LatLng dest = new LatLng(stops.get((int) id).latitude, stops.get((int) id).longitude);
+        LatLng dest = new LatLng(stops.get((int) id).location.latitude, stops.get((int) id).location.longitude);
         mMap.clear();
 
         //Display Shuttle Location and Zoom in to the shuttle position
@@ -572,5 +573,38 @@ public class DriverMapsActivity extends AppCompatActivity
 
         options.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
         mMap.addMarker(options);
+    }
+
+
+    @Override
+    public void parseNotifcation(String N){
+
+        try {
+
+            //DriverMapsActivity D = new DriverMapsActivity();
+            JSONObject newNotification = new JSONObject(N);
+            JSONArray path = newNotification.getJSONArray("path");
+            for (int i=1; i<path.length(); i++){
+                //new StopInformation
+                StopInformation stop_obj= new StopInformation();
+
+
+                JSONObject obj = path.getJSONObject(i);
+                stop_obj.type=obj.getString("type");
+                Double location_lat = obj.getJSONObject("latLng").getDouble("lat");
+                Double location_lng = obj.getJSONObject("latLng").getDouble("lng");
+
+                stop_obj.location= new LatLng(location_lat, location_lng);
+
+                stop_obj.name=obj.getJSONObject("user").getString("first_name")+" "+obj.getJSONObject("user").getString("last_name");
+                stop_obj.student_id=obj.getJSONObject("user").getString("sjsu_id");
+                stops.add(stop_obj);
+            }
+            //updateStops();
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
     }
 }
