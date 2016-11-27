@@ -44,6 +44,7 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.firebase.iid.FirebaseInstanceId;
@@ -88,9 +89,11 @@ public class DriverMapsActivity extends AppCompatActivity
     String dropColor = "#F29525";
     String notification = "{\"path\":\n" +
             "[{\"eta\":0,\"user\":\"driver\",\"latLng\":{\"lng\":-121.879737,\"lat\":37.333163}},\n" +
-            "\t{\"ride_id\":10,\"eta\":135,\"type\":\"pick\",\"user\":{\"latitude\":null,\"sjsu_id\":\"010095345\",\"last_name\":\"Arkalgud\",\"id\":1,\"first_name\":\"Nagkumar\",\"longitude\":null},\"latLng\":{\"lng\":-121.879737,\"lat\":37.333163}},{\"ride_id\":4,\"eta\":237,\"type\":\"pick\",\"user\":{\"latitude\":null,\"sjsu_id\":\"1111111\",\"last_name\":\"gupta\",\"id\":3,\"first_name\":\"balaji\",\"longitude\":null},\"latLng\":{\"lng\":-121.873226,\"lat\":37.331983}},{\"ride_id\":3,\"eta\":237,\"type\":\"pick\",\"user\":{\"latitude\":null,\"sjsu_id\":\"10101010\",\"last_name\":\"jayadev\",\"id\":2,\"first_name\":\"varsha\",\"longitude\":null},\"latLng\":{\"lng\":-121.883569,\"lat\":37.327444}}]}";
+            "\t{\"ride_id\":10,\"eta\":135,\"type\":\"pick\",\"user\":{\"latitude\":null,\"sjsu_id\":\"010095345\",\"last_name\":\"Arkalgud\",\"id\":1,\"first_name\":\"Nagkumar\",\"longitude\":null},\"latLng\":{\"lng\":-121.879737,\"lat\":37.333163}},{\"ride_id\":4,\"eta\":237,\"type\":\"drop\",\"user\":{\"latitude\":null,\"sjsu_id\":\"1111111\",\"last_name\":\"gupta\",\"id\":3,\"first_name\":\"balaji\",\"longitude\":null},\"latLng\":{\"lng\":-121.873226,\"lat\":37.331983}},{\"ride_id\":3,\"eta\":237,\"type\":\"pick\",\"user\":{\"latitude\":null,\"sjsu_id\":\"10101010\",\"last_name\":\"jayadev\",\"id\":2,\"first_name\":\"varsha\",\"longitude\":null},\"latLng\":{\"lng\":-121.883569,\"lat\":37.327444}}]}";
 
     JSONObject authObj;
+    String sid;
+    String sname;
 
 
     @Override
@@ -127,9 +130,9 @@ public class DriverMapsActivity extends AppCompatActivity
             Log.d("Status", "Auth Code in MapsActivity is" + authCode);
             try {
                 authObj = new JSONObject(authCode);
-                RequestParams params = new RequestParams();
-                params.put("token",refreshedToken);
-                invokeWS(params, authObj);
+//                RequestParams params = new RequestParams();
+//                params.put("token",refreshedToken);
+//                callAPI(params, authObj);
 //                authObj.getString("token");
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -162,10 +165,12 @@ public class DriverMapsActivity extends AppCompatActivity
         }
     }
 
-    public void invokeWS(RequestParams params, JSONObject authObj) throws JSONException {
+    public void callAPI(RequestParams params, JSONObject authObj) throws JSONException {
 
         AsyncHttpClient client = new AsyncHttpClient();
         client.addHeader("Authorization","Token "+authObj.getString("token"));
+        client.addHeader("Content-Type","application/json");
+        //client.addHeader("Accept","application/json");
         //client.post("https://bjnkozckss.localtunnel.me/update_device_token/",params ,new AsyncHttpResponseHandler() {
         client.post("http://saferide.nagkumar.com/update_device_token/",params ,new AsyncHttpResponseHandler() {
 
@@ -252,6 +257,15 @@ public class DriverMapsActivity extends AppCompatActivity
 
     private void logOut() {
         //To make API Call for logging out the user
+
+        SharedPreferences preferences = getSharedPreferences("spartansaferide.sjsu.edu.driver",Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = preferences.edit();
+
+        editor.remove("authcode");
+        editor.clear();
+        editor.commit();
+
+        Log.i("Preferences","After Clear: "+getApplicationContext().getSharedPreferences("spartansaferide.sjsu.edu.driver", Context.MODE_PRIVATE).getString("authcode", ""));
     }
 
     @Override
@@ -277,14 +291,31 @@ public class DriverMapsActivity extends AppCompatActivity
         mMap.moveCamera(CameraUpdateFactory.newLatLng(current_location));
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(current_location, 15));
 
-        mMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
+        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
-            public void onMapLongClick(LatLng latLng) {
+            public boolean onMarkerClick(Marker marker) {
 
-                Intent barcodeScanner = new Intent(DriverMapsActivity.this, BarcodeScannerActivity.class);
-                startActivity(barcodeScanner);
+                //LatLng position = marker.getPosition();
+                for(StopInformation s : stops)
+                {
+                    if (s.student_id == sid){
+                        if(s.type.equals("pick")) {
+                            Intent barcodeScanner = new Intent(DriverMapsActivity.this, BarcodeScannerActivity.class);
+                            barcodeScanner.putExtra("id", sid);
+                            barcodeScanner.putExtra("name", s.name);
+                            startActivity(barcodeScanner);
+                        }
+                        else if(s.type.equals("drop")){
 
+
+
+                        }
+                    }
+                }
+
+                return true;
             }
+
         });
     }
 
@@ -351,9 +382,13 @@ public class DriverMapsActivity extends AppCompatActivity
 
                 String item = (String) parent.getItemAtPosition(position);
                 Log.i("Position", "Item Clicked" + id);
-                Toast.makeText(DriverMapsActivity.this, "Option Selected: " + item, Toast.LENGTH_LONG).show();
+              //  Toast.makeText(DriverMapsActivity.this, "Option Selected: " + item, Toast.LENGTH_LONG).show();
 
-                displayPoints(id);
+                sid=stops.get(position).student_id;
+//                sname=stops.get(position).name;
+//                trip_type=stops.get(position).type;
+
+                displayPoints(position);
             }
         });
 
@@ -373,20 +408,29 @@ public class DriverMapsActivity extends AppCompatActivity
         });
     }
 
-    private void displayPoints(long id) {
-        LatLng dest = new LatLng(stops.get((int) id).location.latitude, stops.get((int) id).location.longitude);
+    private void displayPoints(int position) {
+        LatLng dest = new LatLng(stops.get(position).location.latitude, stops.get(position).location.longitude);
         mMap.clear();
+
+        MarkerOptions options = new MarkerOptions();
 
         //Display Shuttle Location and Zoom in to the shuttle position
         mMap.addMarker(new MarkerOptions().position(current_location).title("Shuttle Location").icon(BitmapDescriptorFactory.fromBitmap(smallMarker)));
         mMap.moveCamera(CameraUpdateFactory.newLatLng(current_location));
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(current_location, 15));
 
-        //Display Marker for Pickup Location
-        mMap.addMarker(new MarkerOptions().position(dest).title("PickUp"));
+        //Display Marker for next stop
+        if((stops.get(position).type).equalsIgnoreCase("pick")) {
+            Marker m = mMap.addMarker(new MarkerOptions().position(dest).title("PickUp")
+                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)));
+        }
+        else if((stops.get(position).type).equalsIgnoreCase("drop")){
+            Marker m = mMap.addMarker(new MarkerOptions().position(dest).title("drop")
+            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
+        }
 
         //Draw the route to the pickup point
-        drawMarker(dest);
+        //drawMarker(dest);
 
         // Getting URL to the Google Directions API
         String url = getDirectionsUrl(current_location, dest);
@@ -586,7 +630,7 @@ public class DriverMapsActivity extends AppCompatActivity
         options.position(point);
         // Add new marker to the Google Map Android API V2
 
-        options.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
+        options.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE));
         mMap.addMarker(options);
     }
 
