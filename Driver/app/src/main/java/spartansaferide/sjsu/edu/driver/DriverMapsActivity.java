@@ -306,8 +306,23 @@ public class DriverMapsActivity extends AppCompatActivity
                             startActivity(barcodeScanner);
                         }
                         else if(s.type.equals("drop")){
-
-
+                            AlertDialog.Builder alert = new AlertDialog.Builder(DriverMapsActivity.this).setTitle("Confirm Drop-off")
+                                    .setMessage("Dropped "+sname+"?").setCancelable(true)
+                                    .setPositiveButton("Yes",new DialogInterface.OnClickListener() {
+                                        public void onClick(DialogInterface dialog, int id) {
+                                            dialog.cancel();
+                                            //Add API
+                                        }
+                                    })
+                                    .setNegativeButton("No",new DialogInterface.OnClickListener() {
+                                        public void onClick(DialogInterface dialog,int id) {
+                                            // if this button is clicked, just close the dialog box and do nothing
+                                            dialog.cancel();
+                                        }
+                                    });
+                            ;
+                            final AlertDialog dialog= alert.create();
+                            dialog.show();
 
                         }
                     }
