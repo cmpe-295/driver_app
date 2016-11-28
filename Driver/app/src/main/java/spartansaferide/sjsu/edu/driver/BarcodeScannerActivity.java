@@ -74,7 +74,7 @@ public class BarcodeScannerActivity extends AppCompatActivity {
                     Log.d("test",barcode.displayValue);
 
                     barcodeResult.setText("Student ID : " + barcode.displayValue);
-                    validateStudentId(barcode.toString());
+                    validateStudentId(barcode.displayValue.toString());
 
                 } else {
                     barcodeResult.setText("No barcode found");
