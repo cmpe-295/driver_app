@@ -85,8 +85,8 @@ public class DriverMapsActivity extends AppCompatActivity
     LatLng current_location;
     String authCode;
     Bitmap smallMarker;
-    String pickColor="#57BFD2";
-    String dropColor = "#F29525";
+    String refreshedToken;
+    String baseUrl ="http://saferide.nagkumar.com/";
     String notification = "{\"path\":\n" +
             "[{\"eta\":0,\"user\":\"driver\",\"latLng\":{\"lng\":-121.879737,\"lat\":37.333163}},\n" +
             "\t{\"ride_id\":10,\"eta\":135,\"type\":\"pick\",\"user\":{\"latitude\":null,\"sjsu_id\":\"010095345\",\"last_name\":\"Arkalgud\",\"id\":1,\"first_name\":\"Nagkumar\",\"longitude\":null},\"latLng\":{\"lng\":-121.879737,\"lat\":37.333163}},{\"ride_id\":4,\"eta\":237,\"type\":\"drop\",\"user\":{\"latitude\":null,\"sjsu_id\":\"1111111\",\"last_name\":\"gupta\",\"id\":3,\"first_name\":\"balaji\",\"longitude\":null},\"latLng\":{\"lng\":-121.873226,\"lat\":37.331983}},{\"ride_id\":3,\"eta\":237,\"type\":\"pick\",\"user\":{\"latitude\":null,\"sjsu_id\":\"10101010\",\"last_name\":\"jayadev\",\"id\":2,\"first_name\":\"varsha\",\"longitude\":null},\"latLng\":{\"lng\":-121.883569,\"lat\":37.327444}}]}";
@@ -101,7 +101,7 @@ public class DriverMapsActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_driver_main);
 
-        String refreshedToken = FirebaseInstanceId.getInstance().getToken();
+        refreshedToken = FirebaseInstanceId.getInstance().getToken();
         Log.d("TokenID", "Refreshed token: " + refreshedToken);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.myToolbar);
@@ -130,10 +130,10 @@ public class DriverMapsActivity extends AppCompatActivity
             Log.d("Status", "Auth Code in MapsActivity is" + authCode);
             try {
                 authObj = new JSONObject(authCode);
-//                RequestParams params = new RequestParams();
-//                params.put("token",refreshedToken);
-//                callAPI(params, authObj);
-//                authObj.getString("token");
+                RequestParams params = new RequestParams();
+                params.put("token",refreshedToken);
+                callAPI(params, authObj,"update_device_token/");
+                authObj.getString("token");
             } catch (JSONException e) {
                 e.printStackTrace();
             }
@@ -160,19 +160,19 @@ public class DriverMapsActivity extends AppCompatActivity
             locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
             provider = locationManager.getBestProvider(new Criteria(), false); //To return only enabled providers
 
-            parseNotifcation(notification);
+//            parseNotifcation(notification);
 
         }
     }
 
-    public void callAPI(RequestParams params, JSONObject authObj) throws JSONException {
+    public void callAPI(RequestParams params, JSONObject authObj,String api) throws JSONException {
 
         AsyncHttpClient client = new AsyncHttpClient();
         client.addHeader("Authorization","Token "+authObj.getString("token"));
         client.addHeader("Content-Type","application/json");
         //client.addHeader("Accept","application/json");
         //client.post("https://bjnkozckss.localtunnel.me/update_device_token/",params ,new AsyncHttpResponseHandler() {
-        client.post("http://saferide.nagkumar.com/update_device_token/",params ,new AsyncHttpResponseHandler() {
+        client.post(baseUrl+api,params ,new AsyncHttpResponseHandler() {
 
             @Override
             public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
@@ -290,6 +290,21 @@ public class DriverMapsActivity extends AppCompatActivity
         mMap.addMarker(new MarkerOptions().position(current_location).title("Shuttle Location").icon(BitmapDescriptorFactory.fromBitmap(smallMarker)));
         mMap.moveCamera(CameraUpdateFactory.newLatLng(current_location));
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(current_location, 15));
+
+        //Call API to update Driver Location
+        authCode =  getApplicationContext().getSharedPreferences("spartansaferide.sjsu.edu.driver", Context.MODE_PRIVATE).getString("authcode", "");
+        Log.d("Status", "Auth Code in MapsActivity is" + authCode);
+        try {
+            authObj = new JSONObject(authCode);
+            RequestParams params = new RequestParams();
+            params.put("token",refreshedToken);
+            params.put("latitude",current_location.latitude);
+            params.put("longitude",current_location.longitude);
+            callAPI(params, authObj,"update_driver_location/");
+            authObj.getString("token");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
 
         mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
@@ -459,6 +474,7 @@ public class DriverMapsActivity extends AppCompatActivity
     @Override
     protected void onResume() {
         super.onResume();
+        Log.d("In","On Resume");
 
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return;
@@ -468,6 +484,7 @@ public class DriverMapsActivity extends AppCompatActivity
         locationManager.requestLocationUpdates(provider, 5000, 100, this);
 
         //Call "update_driver_location" API to update the location to the server
+
     }
 
     @Override
