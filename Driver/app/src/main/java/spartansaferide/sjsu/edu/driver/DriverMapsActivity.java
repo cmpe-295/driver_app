@@ -76,7 +76,6 @@ public class DriverMapsActivity extends AppCompatActivity
     private GoogleMap mMap;
     LocationManager locationManager;
     String provider;
-    Location location;
     static Context context;
     static ArrayList<StopInformation> stops = new ArrayList<StopInformation>(8);
     ListView rides;
@@ -95,14 +94,13 @@ public class DriverMapsActivity extends AppCompatActivity
     String sid;
     String sname;
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_driver_main);
 
         refreshedToken = FirebaseInstanceId.getInstance().getToken();
-        Log.d("TokenID", "Refreshed token: " + refreshedToken);
+        Log.d("Status", "Refreshed token: " + refreshedToken);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.myToolbar);
         setSupportActionBar(toolbar);
@@ -131,13 +129,16 @@ public class DriverMapsActivity extends AppCompatActivity
             try {
                 authObj = new JSONObject(authCode);
                 RequestParams params = new RequestParams();
+                params = new RequestParams();
                 params.put("token",refreshedToken);
-                callAPI(params, authObj,"update_device_token/");
+                Log.i("Status","API Token: "+refreshedToken);
+
+                //Call API to update device token
+                makePostCall(params, authObj, "update_device_token/" );
                 authObj.getString("token");
             } catch (JSONException e) {
                 e.printStackTrace();
             }
-
 
             DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
             ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -160,44 +161,9 @@ public class DriverMapsActivity extends AppCompatActivity
             locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
             provider = locationManager.getBestProvider(new Criteria(), false); //To return only enabled providers
 
-//            parseNotifcation(notification);
+            parseNotifcation(notification);
 
         }
-    }
-
-    public void callAPI(RequestParams params, JSONObject authObj,String api) throws JSONException {
-
-        AsyncHttpClient client = new AsyncHttpClient();
-        client.addHeader("Authorization","Token "+authObj.getString("token"));
-        client.addHeader("Content-Type","application/json");
-        //client.addHeader("Accept","application/json");
-        //client.post("https://bjnkozckss.localtunnel.me/update_device_token/",params ,new AsyncHttpResponseHandler() {
-        client.post(baseUrl+api,params ,new AsyncHttpResponseHandler() {
-
-            @Override
-            public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
-
-                Log.d("Call","Status Code"+statusCode);
-
-            }
-
-            @Override
-            public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
-
-                // When Http response code is '404'
-                if(statusCode == 404){
-                    Toast.makeText(getApplicationContext(), "Requested resource not found", Toast.LENGTH_LONG).show();
-                }
-                // When Http response code is '500'
-                else if(statusCode == 500){
-                    Toast.makeText(getApplicationContext(), "Something went wrong at server end", Toast.LENGTH_LONG).show();
-                }
-                // When Http response code other than 404, 500
-                else{
-                    Toast.makeText(getApplicationContext(), "Unexpected Error occcured! [Most common Error: Device might not be connected to Internet or remote server is not up and running]", Toast.LENGTH_LONG).show();
-                }
-            }
-        });
     }
 
     private void checkGPSStatus() {
@@ -295,13 +261,14 @@ public class DriverMapsActivity extends AppCompatActivity
         authCode =  getApplicationContext().getSharedPreferences("spartansaferide.sjsu.edu.driver", Context.MODE_PRIVATE).getString("authcode", "");
         Log.d("Status", "Auth Code in MapsActivity is" + authCode);
         try {
+
             authObj = new JSONObject(authCode);
             RequestParams params = new RequestParams();
-            params.put("token",refreshedToken);
-            params.put("latitude",current_location.latitude);
-            params.put("longitude",current_location.longitude);
-            callAPI(params, authObj,"update_driver_location/");
-            authObj.getString("token");
+            params.put(new String("latitude"),String.valueOf(current_location.latitude));
+            params.put(new String("longitude"),String.valueOf(current_location.longitude));
+
+            makePostCall(params, authObj, "ride/update_driver_location/");
+//            authObj.getString("token");
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -696,4 +663,75 @@ public class DriverMapsActivity extends AppCompatActivity
         }
 
     }
+
+    public void makePutCall(RequestParams params, JSONObject authObj,String api) throws JSONException {
+
+        AsyncHttpClient client = new AsyncHttpClient();
+        client.addHeader("Authorization","Token "+authObj.getString("token"));
+        client.addHeader("Content-Type","application/json");
+        client.addHeader("Accept","application/json");
+
+        client.post(baseUrl+api,params ,new AsyncHttpResponseHandler() {
+
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
+
+                Log.d("Return Status","Status Code: b.b@sjsu.edu    "+statusCode);
+
+            }
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
+
+                // When Http response code is '404'
+                if(statusCode == 404){
+                    Toast.makeText(getApplicationContext(), "Requested resource not found", Toast.LENGTH_LONG).show();
+                }
+                // When Http response code is '500'
+                else if(statusCode == 500){
+                    Toast.makeText(getApplicationContext(), "Something went wrong at server end", Toast.LENGTH_LONG).show();
+                }
+                // When Http response code other than 404, 500
+                else{
+                    Toast.makeText(getApplicationContext(), "Unexpected Error occcured! [Most common Error: Device might not be connected to Internet or remote server is not up and running]", Toast.LENGTH_LONG).show();
+                }
+            }
+        });
+    }
+
+    public void makePostCall(RequestParams params, JSONObject authObj, String api) throws JSONException {
+
+        AsyncHttpClient client = new AsyncHttpClient();
+        client.addHeader("Authorization","Token "+authObj.getString("token"));
+        client.addHeader("Content-Type","application/json");
+        client.addHeader("Accept","application/json");
+
+        client.post(baseUrl+api, params, new AsyncHttpResponseHandler() {
+
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
+
+                Log.d("Return Status","Status Code: "+statusCode);
+
+            }
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
+
+                // When Http response code is '404'
+                if(statusCode == 404){
+                    Toast.makeText(getApplicationContext(), "Requested resource not found", Toast.LENGTH_LONG).show();
+                }
+                // When Http response code is '500'
+                else if(statusCode == 500){
+                    Toast.makeText(getApplicationContext(), "Something went wrong at server end", Toast.LENGTH_LONG).show();
+                }
+                // When Http response code other than 404, 500
+                else{
+                    Toast.makeText(getApplicationContext(), "Unexpected Error occcured! [Most common Error: Device might not be connected to Internet or remote server is not up and running]", Toast.LENGTH_LONG).show();
+                }
+            }
+        });
+    }
+
 }
