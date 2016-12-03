@@ -57,6 +57,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
@@ -69,9 +70,10 @@ import com.loopj.android.http.AsyncHttpResponseHandler;
 import com.loopj.android.http.RequestParams;
 
 import cz.msebera.android.httpclient.Header;
+import cz.msebera.android.httpclient.entity.StringEntity;
 
 public class DriverMapsActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback, LocationListener,AndroidFirebaseMessageService.SetRoute {
+        implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback, LocationListener, AndroidFirebaseMessageService.SetRoute {
 
     private GoogleMap mMap;
     LocationManager locationManager;
@@ -85,7 +87,7 @@ public class DriverMapsActivity extends AppCompatActivity
     String authCode;
     Bitmap smallMarker;
     String refreshedToken;
-    String baseUrl ="http://saferide.nagkumar.com/";
+    String baseUrl = "http://saferide.nagkumar.com/";
     String notification = "{\"path\":\n" +
             "[{\"eta\":0,\"user\":\"driver\",\"latLng\":{\"lng\":-121.879737,\"lat\":37.333163}},\n" +
             "\t{\"ride_id\":10,\"eta\":135,\"type\":\"pick\",\"user\":{\"latitude\":null,\"sjsu_id\":\"010095345\",\"last_name\":\"Arkalgud\",\"id\":1,\"first_name\":\"Nagkumar\",\"longitude\":null},\"latLng\":{\"lng\":-121.879737,\"lat\":37.333163}},{\"ride_id\":4,\"eta\":237,\"type\":\"drop\",\"user\":{\"latitude\":null,\"sjsu_id\":\"1111111\",\"last_name\":\"gupta\",\"id\":3,\"first_name\":\"balaji\",\"longitude\":null},\"latLng\":{\"lng\":-121.873226,\"lat\":37.331983}},{\"ride_id\":3,\"eta\":237,\"type\":\"pick\",\"user\":{\"latitude\":null,\"sjsu_id\":\"10101010\",\"last_name\":\"jayadev\",\"id\":2,\"first_name\":\"varsha\",\"longitude\":null},\"latLng\":{\"lng\":-121.883569,\"lat\":37.327444}}]}";
@@ -124,19 +126,19 @@ public class DriverMapsActivity extends AppCompatActivity
 
         } else {
             //Fetch the authCode stored in SharedPreferences
-            authCode =  getApplicationContext().getSharedPreferences("spartansaferide.sjsu.edu.driver", Context.MODE_PRIVATE).getString("authcode", "");
+            authCode = getApplicationContext().getSharedPreferences("spartansaferide.sjsu.edu.driver", Context.MODE_PRIVATE).getString("authcode", "");
             Log.d("Status", "Auth Code in MapsActivity is" + authCode);
             try {
                 authObj = new JSONObject(authCode);
-                RequestParams params = new RequestParams();
-                params = new RequestParams();
-                params.put("token",refreshedToken);
-                Log.i("Status","API Token: "+refreshedToken);
+                JSONObject params = new JSONObject();
+                params.put("token", refreshedToken);
+                Log.i("Status", "API Token: " + refreshedToken);
 
                 //Call API to update device token
-                makePostCall(params, authObj, "update_device_token/" );
-                authObj.getString("token");
+                makePostCall(params, authObj, "update_device_token/");
             } catch (JSONException e) {
+                e.printStackTrace();
+            } catch (UnsupportedEncodingException e) {
                 e.printStackTrace();
             }
 
@@ -224,14 +226,14 @@ public class DriverMapsActivity extends AppCompatActivity
     private void logOut() {
         //To make API Call for logging out the user
 
-        SharedPreferences preferences = getSharedPreferences("spartansaferide.sjsu.edu.driver",Context.MODE_PRIVATE);
+        SharedPreferences preferences = getSharedPreferences("spartansaferide.sjsu.edu.driver", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
 
         editor.remove("authcode");
         editor.clear();
         editor.commit();
 
-        Log.i("Preferences","After Clear: "+getApplicationContext().getSharedPreferences("spartansaferide.sjsu.edu.driver", Context.MODE_PRIVATE).getString("authcode", ""));
+        Log.i("Preferences", "After Clear: " + getApplicationContext().getSharedPreferences("spartansaferide.sjsu.edu.driver", Context.MODE_PRIVATE).getString("authcode", ""));
     }
 
     @Override
@@ -258,18 +260,20 @@ public class DriverMapsActivity extends AppCompatActivity
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(current_location, 15));
 
         //Call API to update Driver Location
-        authCode =  getApplicationContext().getSharedPreferences("spartansaferide.sjsu.edu.driver", Context.MODE_PRIVATE).getString("authcode", "");
+        authCode = getApplicationContext().getSharedPreferences("spartansaferide.sjsu.edu.driver", Context.MODE_PRIVATE).getString("authcode", "");
         Log.d("Status", "Auth Code in MapsActivity is" + authCode);
         try {
 
             authObj = new JSONObject(authCode);
-            RequestParams params = new RequestParams();
-            params.put(new String("latitude"),String.valueOf(current_location.latitude));
-            params.put(new String("longitude"),String.valueOf(current_location.longitude));
+            JSONObject params = new JSONObject();
+            params.put(new String("latitude"), String.valueOf(current_location.latitude));
+            params.put(new String("longitude"), String.valueOf(current_location.longitude));
 
+            //Update shuttle location to the server
             makePostCall(params, authObj, "ride/update_driver_location/");
-//            authObj.getString("token");
         } catch (JSONException e) {
+            e.printStackTrace();
+        } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
 
@@ -278,41 +282,37 @@ public class DriverMapsActivity extends AppCompatActivity
             public boolean onMarkerClick(Marker marker) {
 
                 //LatLng position = marker.getPosition();
-                for(StopInformation s : stops)
-                {
-                    if (s.student_id == sid){
-                        if(s.type.equals("pick")) {
+                for (StopInformation s : stops) {
+                    if (s.student_id == sid) {
+                        if (s.type.equals("pick")) {
                             Intent barcodeScanner = new Intent(DriverMapsActivity.this, BarcodeScannerActivity.class);
                             barcodeScanner.putExtra("id", sid);
                             barcodeScanner.putExtra("name", s.name);
                             startActivity(barcodeScanner);
-                        }
-                        else if(s.type.equals("drop")){
+                        } else if (s.type.equals("drop")) {
                             AlertDialog.Builder alert = new AlertDialog.Builder(DriverMapsActivity.this).setTitle("Confirm Drop-off")
-                                    .setMessage("Dropped "+sname+"?").setCancelable(true)
-                                    .setPositiveButton("Yes",new DialogInterface.OnClickListener() {
+                                    .setMessage("Dropped " + sname + "?").setCancelable(true)
+                                    .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                                         public void onClick(DialogInterface dialog, int id) {
                                             dialog.cancel();
                                             //Add API
                                         }
                                     })
-                                    .setNegativeButton("No",new DialogInterface.OnClickListener() {
-                                        public void onClick(DialogInterface dialog,int id) {
+                                    .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                                        public void onClick(DialogInterface dialog, int id) {
                                             // if this button is clicked, just close the dialog box and do nothing
                                             dialog.cancel();
                                         }
                                     });
                             ;
-                            final AlertDialog dialog= alert.create();
+                            final AlertDialog dialog = alert.create();
                             dialog.show();
 
                         }
                     }
                 }
-
                 return true;
             }
-
         });
     }
 
@@ -360,7 +360,7 @@ public class DriverMapsActivity extends AppCompatActivity
             try {
                 listAddresses = geocoder.getFromLocation(i.location.latitude, i.location.longitude, 1);
 
-                stoparr.add((i.type.toUpperCase()+","+i.student_id+","+i.name.toUpperCase()));
+                stoparr.add((i.type.toUpperCase() + "," + i.student_id + "," + i.name.toUpperCase()));
 
             } catch (IOException e) {
                 e.printStackTrace();
@@ -379,9 +379,9 @@ public class DriverMapsActivity extends AppCompatActivity
 
                 String item = (String) parent.getItemAtPosition(position);
                 Log.i("Position", "Item Clicked" + id);
-              //  Toast.makeText(DriverMapsActivity.this, "Option Selected: " + item, Toast.LENGTH_LONG).show();
+                //  Toast.makeText(DriverMapsActivity.this, "Option Selected: " + item, Toast.LENGTH_LONG).show();
 
-                sid=stops.get(position).student_id;
+                sid = stops.get(position).student_id;
 //                sname=stops.get(position).name;
 //                trip_type=stops.get(position).type;
 
@@ -395,7 +395,7 @@ public class DriverMapsActivity extends AppCompatActivity
 
                 LatLng navigate_loc = stops.get(i).location;
 
-                Uri gmmIntentUri = Uri.parse("google.navigation:q="+navigate_loc.latitude+","+navigate_loc.longitude);
+                Uri gmmIntentUri = Uri.parse("google.navigation:q=" + navigate_loc.latitude + "," + navigate_loc.longitude);
                 Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
                 mapIntent.setPackage("com.google.android.apps.maps");
                 startActivity(mapIntent);
@@ -417,13 +417,12 @@ public class DriverMapsActivity extends AppCompatActivity
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(current_location, 15));
 
         //Display Marker for next stop
-        if((stops.get(position).type).equalsIgnoreCase("pick")) {
+        if ((stops.get(position).type).equalsIgnoreCase("pick")) {
             Marker m = mMap.addMarker(new MarkerOptions().position(dest).title("PickUp")
                     .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)));
-        }
-        else if((stops.get(position).type).equalsIgnoreCase("drop")){
+        } else if ((stops.get(position).type).equalsIgnoreCase("drop")) {
             Marker m = mMap.addMarker(new MarkerOptions().position(dest).title("drop")
-            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
+                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
         }
 
         //Draw the route to the pickup point
@@ -441,7 +440,7 @@ public class DriverMapsActivity extends AppCompatActivity
     @Override
     protected void onResume() {
         super.onResume();
-        Log.d("In","On Resume");
+        Log.d("In", "On Resume");
 
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return;
@@ -449,9 +448,6 @@ public class DriverMapsActivity extends AppCompatActivity
 
         //Send location updates every 5 seconds and for every change in 100 meters in distance
         locationManager.requestLocationUpdates(provider, 5000, 100, this);
-
-        //Call "update_driver_location" API to update the location to the server
-
     }
 
     @Override
@@ -621,39 +617,26 @@ public class DriverMapsActivity extends AppCompatActivity
         }
     }
 
-    private void drawMarker(LatLng point) {
-        // Creating MarkerOptions
-        MarkerOptions options = new MarkerOptions();
-
-        // Setting the position of the marker
-        options.position(point);
-        // Add new marker to the Google Map Android API V2
-
-        options.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE));
-        mMap.addMarker(options);
-    }
-
-
     @Override
-    public void parseNotifcation(String N){
+    public void parseNotifcation(String N) {
 
         try {
 
             JSONObject newNotification = new JSONObject(N);
             JSONArray path = newNotification.getJSONArray("path");
-            for (int i=1; i<path.length(); i++){
+            for (int i = 1; i < path.length(); i++) {
                 //new StopInformation
-                StopInformation stop_obj= new StopInformation();
+                StopInformation stop_obj = new StopInformation();
 
                 JSONObject obj = path.getJSONObject(i);
-                stop_obj.type=obj.getString("type");
+                stop_obj.type = obj.getString("type");
                 Double location_lat = obj.getJSONObject("latLng").getDouble("lat");
                 Double location_lng = obj.getJSONObject("latLng").getDouble("lng");
 
-                stop_obj.location= new LatLng(location_lat, location_lng);
+                stop_obj.location = new LatLng(location_lat, location_lng);
 
-                stop_obj.name=obj.getJSONObject("user").getString("first_name")+" "+obj.getJSONObject("user").getString("last_name");
-                stop_obj.student_id=obj.getJSONObject("user").getString("sjsu_id");
+                stop_obj.name = obj.getJSONObject("user").getString("first_name") + " " + obj.getJSONObject("user").getString("last_name");
+                stop_obj.student_id = obj.getJSONObject("user").getString("sjsu_id");
                 stops.add(stop_obj);
             }
             //updateStops();
@@ -664,19 +647,20 @@ public class DriverMapsActivity extends AppCompatActivity
 
     }
 
-    public void makePutCall(RequestParams params, JSONObject authObj,String api) throws JSONException {
+    public void makePutCall(JSONObject params, JSONObject authObj, String api) throws JSONException, UnsupportedEncodingException {
 
         AsyncHttpClient client = new AsyncHttpClient();
-        client.addHeader("Authorization","Token "+authObj.getString("token"));
-        client.addHeader("Content-Type","application/json");
-        client.addHeader("Accept","application/json");
+        StringEntity entity = new StringEntity(params.toString());
+        client.addHeader("Authorization", "Token " + authObj.getString("token"));
+        client.addHeader("Content-Type", "application/json");
+        client.addHeader("Accept", "application/json");
 
-        client.post(baseUrl+api,params ,new AsyncHttpResponseHandler() {
+        client.post(context, baseUrl + api, entity, "application/json", new AsyncHttpResponseHandler() {
 
             @Override
             public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
 
-                Log.d("Return Status","Status Code: b.b@sjsu.edu    "+statusCode);
+                Log.d("Return Status", "Status Code: b.b@sjsu.edu    " + statusCode);
 
             }
 
@@ -684,50 +668,50 @@ public class DriverMapsActivity extends AppCompatActivity
             public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
 
                 // When Http response code is '404'
-                if(statusCode == 404){
+                if (statusCode == 404) {
                     Toast.makeText(getApplicationContext(), "Requested resource not found", Toast.LENGTH_LONG).show();
                 }
                 // When Http response code is '500'
-                else if(statusCode == 500){
+                else if (statusCode == 500) {
                     Toast.makeText(getApplicationContext(), "Something went wrong at server end", Toast.LENGTH_LONG).show();
                 }
                 // When Http response code other than 404, 500
-                else{
+                else {
                     Toast.makeText(getApplicationContext(), "Unexpected Error occcured! [Most common Error: Device might not be connected to Internet or remote server is not up and running]", Toast.LENGTH_LONG).show();
                 }
             }
         });
     }
 
-    public void makePostCall(RequestParams params, JSONObject authObj, String api) throws JSONException {
+    public void makePostCall(JSONObject params, JSONObject authObj, String api) throws JSONException, UnsupportedEncodingException {
 
         AsyncHttpClient client = new AsyncHttpClient();
-        client.addHeader("Authorization","Token "+authObj.getString("token"));
-        client.addHeader("Content-Type","application/json");
-        client.addHeader("Accept","application/json");
+        StringEntity entity = new StringEntity(params.toString());
 
-        client.post(baseUrl+api, params, new AsyncHttpResponseHandler() {
+        client.addHeader("Authorization", "Token " + authObj.getString("token"));
+        client.addHeader("Content-Type", "application/json");
+        client.addHeader("Accept", "application/json");
+
+        client.post(context, baseUrl + api, entity, "application/json", new AsyncHttpResponseHandler() {
 
             @Override
             public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
-
-                Log.d("Return Status","Status Code: "+statusCode);
-
+                Log.d("Return Status", "Status Code: " + statusCode);
             }
 
             @Override
             public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
 
                 // When Http response code is '404'
-                if(statusCode == 404){
+                if (statusCode == 404) {
                     Toast.makeText(getApplicationContext(), "Requested resource not found", Toast.LENGTH_LONG).show();
                 }
                 // When Http response code is '500'
-                else if(statusCode == 500){
+                else if (statusCode == 500) {
                     Toast.makeText(getApplicationContext(), "Something went wrong at server end", Toast.LENGTH_LONG).show();
                 }
                 // When Http response code other than 404, 500
-                else{
+                else {
                     Toast.makeText(getApplicationContext(), "Unexpected Error occcured! [Most common Error: Device might not be connected to Internet or remote server is not up and running]", Toast.LENGTH_LONG).show();
                 }
             }
