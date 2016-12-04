@@ -35,8 +35,9 @@ public class AndroidFirebaseMessageService extends FirebaseMessagingService {
         //create notification
         createNotification(remoteMessage.getNotification().getBody());
         String notification_body = remoteMessage.getNotification().getBody();
-        driverMaps.parseNotifcation(notification_body);
-        }
+
+        Notification.getInstance().message=notification_body;
+    }
 
 
 

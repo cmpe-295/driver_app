@@ -60,6 +60,7 @@ import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -76,6 +77,8 @@ public class DriverMapsActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback, LocationListener, AndroidFirebaseMessageService.SetRoute {
 
     private GoogleMap mMap;
+    Thread thread;
+    boolean stop=false;
     LocationManager locationManager;
     String provider;
     static Context context;
@@ -88,9 +91,9 @@ public class DriverMapsActivity extends AppCompatActivity
     Bitmap smallMarker;
     String refreshedToken;
     String baseUrl = "http://saferide.nagkumar.com/";
-    String notification = "{\"path\":\n" +
-            "[{\"eta\":0,\"user\":\"driver\",\"latLng\":{\"lng\":-121.879737,\"lat\":37.333163}},\n" +
-            "\t{\"ride_id\":10,\"eta\":135,\"type\":\"pick\",\"user\":{\"latitude\":null,\"sjsu_id\":\"010095345\",\"last_name\":\"Arkalgud\",\"id\":1,\"first_name\":\"Nagkumar\",\"longitude\":null},\"latLng\":{\"lng\":-121.879737,\"lat\":37.333163}},{\"ride_id\":4,\"eta\":237,\"type\":\"drop\",\"user\":{\"latitude\":null,\"sjsu_id\":\"1111111\",\"last_name\":\"gupta\",\"id\":3,\"first_name\":\"balaji\",\"longitude\":null},\"latLng\":{\"lng\":-121.873226,\"lat\":37.331983}},{\"ride_id\":3,\"eta\":237,\"type\":\"pick\",\"user\":{\"latitude\":null,\"sjsu_id\":\"10101010\",\"last_name\":\"jayadev\",\"id\":2,\"first_name\":\"varsha\",\"longitude\":null},\"latLng\":{\"lng\":-121.883569,\"lat\":37.327444}}]}";
+//    String notification = "{\"path\":\n" +
+//            "[{\"eta\":0,\"user\":\"driver\",\"latLng\":{\"lng\":-121.879737,\"lat\":37.333163}},\n" +
+//            "\t{\"ride_id\":10,\"eta\":135,\"type\":\"pick\",\"user\":{\"latitude\":null,\"sjsu_id\":\"010095345\",\"last_name\":\"Arkalgud\",\"id\":1,\"first_name\":\"Nagkumar\",\"longitude\":null},\"latLng\":{\"lng\":-121.879737,\"lat\":37.333163}},{\"ride_id\":4,\"eta\":237,\"type\":\"drop\",\"user\":{\"latitude\":null,\"sjsu_id\":\"1111111\",\"last_name\":\"gupta\",\"id\":3,\"first_name\":\"balaji\",\"longitude\":null},\"latLng\":{\"lng\":-121.873226,\"lat\":37.331983}},{\"ride_id\":3,\"eta\":237,\"type\":\"pick\",\"user\":{\"latitude\":null,\"sjsu_id\":\"10101010\",\"last_name\":\"jayadev\",\"id\":2,\"first_name\":\"varsha\",\"longitude\":null},\"latLng\":{\"lng\":-121.883569,\"lat\":37.327444}}]}";
 
     JSONObject authObj;
     String sid;
@@ -110,7 +113,6 @@ public class DriverMapsActivity extends AppCompatActivity
 
         rides = (ListView) findViewById(R.id.rides);
 
-
         BitmapDrawable bitmapdraw = (BitmapDrawable) getResources().getDrawable(R.drawable.bus_icon);
         Bitmap b = bitmapdraw.getBitmap();
         smallMarker = Bitmap.createScaledBitmap(b, 75, 75, false);
@@ -119,11 +121,9 @@ public class DriverMapsActivity extends AppCompatActivity
         int status = GooglePlayServicesUtil.isGooglePlayServicesAvailable(getBaseContext());
 
         if (status != ConnectionResult.SUCCESS) { // Google Play Services are not available
-
             int requestCode = 10;
             Dialog dialog = GooglePlayServicesUtil.getErrorDialog(status, this, requestCode);
             dialog.show();
-
         } else {
             //Fetch the authCode stored in SharedPreferences
             authCode = getApplicationContext().getSharedPreferences("spartansaferide.sjsu.edu.driver", Context.MODE_PRIVATE).getString("authcode", "");
@@ -163,9 +163,10 @@ public class DriverMapsActivity extends AppCompatActivity
             locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
             provider = locationManager.getBestProvider(new Criteria(), false); //To return only enabled providers
 
-            parseNotifcation(notification);
+//            parseNotifcation(notification);
 
         }
+        createthread();
     }
 
     private void checkGPSStatus() {
@@ -345,7 +346,7 @@ public class DriverMapsActivity extends AppCompatActivity
         Location location = locationManager.getLastKnownLocation(provider);
 
         //populate list of stops
-        updateStops();
+      //  updateStops();
 
         if (location != null) {
             onLocationChanged(location);
@@ -640,11 +641,9 @@ public class DriverMapsActivity extends AppCompatActivity
                 stops.add(stop_obj);
             }
             //updateStops();
-
         } catch (JSONException e) {
             e.printStackTrace();
         }
-
     }
 
     public void makePutCall(JSONObject params, JSONObject authObj, String api) throws JSONException, UnsupportedEncodingException {
@@ -659,9 +658,7 @@ public class DriverMapsActivity extends AppCompatActivity
 
             @Override
             public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
-
                 Log.d("Return Status", "Status Code: b.b@sjsu.edu    " + statusCode);
-
             }
 
             @Override
@@ -718,4 +715,46 @@ public class DriverMapsActivity extends AppCompatActivity
         });
     }
 
+    public void createthread(){
+        thread=new Thread(new Runnable() {
+            public void run() {
+
+                while(!stop && Notification.getInstance().message!=""){
+                    // Log.i("herer","response");
+                    try {
+                        String mesg=Notification.getInstance().message;
+                        Notification.getInstance().message="";
+                        JSONObject newNotification = new JSONObject(mesg);
+                        JSONArray path = newNotification.getJSONArray("path");
+                        for (int i = 1; i < path.length(); i++) {
+                            //new StopInformation
+                            StopInformation stop_obj = new StopInformation();
+
+                            JSONObject obj = path.getJSONObject(i);
+                            stop_obj.type = obj.getString("type");
+                            Double location_lat = obj.getJSONObject("latLng").getDouble("lat");
+                            Double location_lng = obj.getJSONObject("latLng").getDouble("lng");
+
+                            stop_obj.location = new LatLng(location_lat, location_lng);
+
+                            stop_obj.name = obj.getJSONObject("user").getString("first_name") + " " + obj.getJSONObject("user").getString("last_name");
+                            stop_obj.student_id = obj.getJSONObject("user").getString("sjsu_id");
+                            stops.add(stop_obj);
+                        }
+                        DriverMapsActivity.this.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+
+                                updateStops();
+
+                            }
+                        });
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+        thread.start();
+    }
 }
