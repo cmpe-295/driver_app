@@ -17,14 +17,24 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.common.api.CommonStatusCodes;
+import com.google.android.gms.drive.Drive;
 import com.google.android.gms.vision.barcode.Barcode;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
+import com.loopj.android.http.JsonHttpResponseHandler;
 import com.loopj.android.http.RequestParams;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.UnsupportedEncodingException;
 import java.util.regex.*;
 
 import cz.msebera.android.httpclient.Header;
+import cz.msebera.android.httpclient.entity.StringEntity;
+
+import static spartansaferide.sjsu.edu.driver.DriverMapsActivity.context;
 
 
 public class BarcodeScannerActivity extends AppCompatActivity {
@@ -107,7 +117,13 @@ public class BarcodeScannerActivity extends AppCompatActivity {
                     .setMessage("Picked up "+sname+"?").setCancelable(true)
                     .setPositiveButton("Yes",new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
-                            updatePickUp();
+                            try {
+                                updatePickUp("ride/pickup_client/");
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            } catch (UnsupportedEncodingException e) {
+                                e.printStackTrace();
+                            }
                             finish();
                         }
                     })
@@ -138,35 +154,47 @@ public class BarcodeScannerActivity extends AppCompatActivity {
         }
     }
 
-    public void updatePickUp(){
-        params.put("sjsu_id",sid);
+    public void updatePickUp(String api) throws JSONException, UnsupportedEncodingException {
+        //params.put("sjsu_id",sid);
+        JSONObject student = new JSONObject();
+        student.put("sjsu_id",sid);
         AsyncHttpClient client = new AsyncHttpClient();
-        client.post("http://saferide.nagkumar.com/pickup_client/", params, new AsyncHttpResponseHandler() {
+        StringEntity entity = new StringEntity(student.toString());
+        client.addHeader("Authorization", "Token " + DriverMapsActivity.authObj.getString("token"));
+        client.addHeader("Content-Type", "application/json");
+        client.addHeader("Accept", "application/json");
 
+        client.put(context, DriverMapsActivity.baseUrl + api, entity, "application/json", new JsonHttpResponseHandler() {
 
             @Override
-            public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
+            public void onSuccess(int statusCode, Header[] headers, JSONObject responseBody) {
 
-                //Hide Progress Bar after Successful Login
-                //prgDialog.hide();
+                try {
+                    JSONObject j = new JSONObject(String.valueOf(responseBody));
+                   // JSONArray arr = new JSONArray(new String(responseBody));
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+                Log.d("Return Status", "Status Code: b.b@sjsu.edu    " + statusCode);
                 finish();
+
             }
 
             @Override
-            public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
+            public void onFailure(int statusCode, Header[] headers, Throwable error, JSONObject errorResponse) {
 
-                // Hide Progress Dialog
-                //prgDialog.hide();
                 // When Http response code is '404'
-                if(statusCode == 404){
+                if (statusCode == 404) {
                     Toast.makeText(getApplicationContext(), "Requested resource not found", Toast.LENGTH_LONG).show();
                 }
                 // When Http response code is '500'
-                else if(statusCode == 500){
+                else if (statusCode == 500) {
                     Toast.makeText(getApplicationContext(), "Something went wrong at server end", Toast.LENGTH_LONG).show();
                 }
                 // When Http response code other than 404, 500
-                else{
+                else {
                     Toast.makeText(getApplicationContext(), "Unexpected Error occcured! [Most common Error: Device might not be connected to Internet or remote server is not up and running]", Toast.LENGTH_LONG).show();
                 }
             }

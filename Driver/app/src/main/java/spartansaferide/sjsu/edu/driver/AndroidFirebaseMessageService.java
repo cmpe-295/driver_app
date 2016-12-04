@@ -51,7 +51,7 @@ public class AndroidFirebaseMessageService extends FirebaseMessagingService {
         NotificationCompat.Builder mNotificationBuilder = new NotificationCompat.Builder( this)
                 .setSmallIcon(R.mipmap.spartan_logo)
                 .setContentTitle("SafeRide")
-                .setContentText(messageBody)
+                .setContentText("You have a new ride!")
                 .setAutoCancel( true )
                 .setSound(notificationSoundURI)
                 .setContentIntent(resultIntent);
