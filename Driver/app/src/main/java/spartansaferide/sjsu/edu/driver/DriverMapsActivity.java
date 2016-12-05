@@ -321,9 +321,35 @@ public class DriverMapsActivity extends AppCompatActivity
         });
     }
 
+    @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        //parse JSON
+        stops = new ArrayList<StopInformation>();
+        String s = data.getStringExtra("response");
+        try {
+            JSONObject response = new JSONObject(data.getStringExtra("response"));
+            JSONArray path = response.getJSONArray("route");
+            for (int i = 1; i < path.length(); i++) {
+                //new StopInformation
+                StopInformation stop_obj = new StopInformation();
 
-       Log.d("got ","result");
+                JSONObject obj = path.getJSONObject(i);
+                stop_obj.type = obj.getString("type");
+                Double location_lat = obj.getJSONObject("latLng").getDouble("lat");
+                Double location_lng = obj.getJSONObject("latLng").getDouble("lng");
+
+                stop_obj.location = new LatLng(location_lat, location_lng);
+
+                stop_obj.name = obj.getJSONObject("user").getString("first_name") + " " + obj.getJSONObject("user").getString("last_name");
+                stop_obj.student_id = obj.getJSONObject("user").getString("sjsu_id");
+                stops.add(stop_obj);
+            }
+            updateStops();
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
     }
 
     @Override

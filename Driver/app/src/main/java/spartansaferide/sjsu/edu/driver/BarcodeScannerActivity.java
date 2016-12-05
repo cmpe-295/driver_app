@@ -124,7 +124,7 @@ public class BarcodeScannerActivity extends AppCompatActivity {
                             } catch (UnsupportedEncodingException e) {
                                 e.printStackTrace();
                             }
-                            finish();
+                            //finish();
                         }
                     })
                     .setNegativeButton("No",new DialogInterface.OnClickListener() {
@@ -170,11 +170,16 @@ public class BarcodeScannerActivity extends AppCompatActivity {
             public void onSuccess(int statusCode, Header[] headers, JSONObject responseBody) {
 
                 try {
-                    JSONObject j = new JSONObject(String.valueOf(responseBody));
+                    //String str = new String(responseBody, "UTF-8");
+                    JSONArray response = responseBody.getJSONArray("route");
+                   // Intent i = new Intent();
+
+                    setResult(RESULT_OK, getIntent().putExtra("response",responseBody.toString()));
                    // JSONArray arr = new JSONArray(new String(responseBody));
 
                 } catch (JSONException e) {
-                    e.printStackTrace();
+                    Intent i = new Intent();
+                    setResult(2, i);
                 }
 
                 Log.d("Return Status", "Status Code: b.b@sjsu.edu    " + statusCode);
@@ -183,7 +188,7 @@ public class BarcodeScannerActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onFailure(int statusCode, Header[] headers, Throwable error, JSONObject errorResponse) {
+            public void onFailure(int statusCode, Header[] headers, Throwable error, JSONObject responseBody) {
 
                 // When Http response code is '404'
                 if (statusCode == 404) {
