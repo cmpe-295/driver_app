@@ -68,6 +68,7 @@ import java.util.Locale;
 
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
+import com.loopj.android.http.JsonHttpResponseHandler;
 import com.loopj.android.http.RequestParams;
 
 import cz.msebera.android.httpclient.Header;
@@ -296,11 +297,16 @@ public class DriverMapsActivity extends AppCompatActivity
                             startActivityForResult(barcodeScanner, 1);
                         } else if (s.type.equals("drop")) {
                             AlertDialog.Builder alert = new AlertDialog.Builder(DriverMapsActivity.this).setTitle("Confirm Drop-off")
-                                    .setMessage("Dropped " + sname + "?").setCancelable(true)
+                                    .setMessage("Dropped " + s.name + "?").setCancelable(true)
                                     .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                                         public void onClick(DialogInterface dialog, int id) {
-                                            dialog.cancel();
-                                            //Add API
+                                            try {
+                                                makePutCall(sid, "ride/drop_client/");
+                                            } catch (JSONException e) {
+                                                e.printStackTrace();
+                                            } catch (UnsupportedEncodingException e) {
+                                                e.printStackTrace();
+                                            }
                                         }
                                     })
                                     .setNegativeButton("No", new DialogInterface.OnClickListener() {
@@ -324,26 +330,35 @@ public class DriverMapsActivity extends AppCompatActivity
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        //parse JSON
         stops = new ArrayList<StopInformation>();
-        String s = data.getStringExtra("response");
+        updateRoute(data.getStringExtra("response"));
+    }
+
+    public void updateRoute(String newRoute){
+        //parse JSON
+
         try {
-            JSONObject response = new JSONObject(data.getStringExtra("response"));
+            JSONObject response = new JSONObject(newRoute);
             JSONArray path = response.getJSONArray("route");
-            for (int i = 1; i < path.length(); i++) {
-                //new StopInformation
-                StopInformation stop_obj = new StopInformation();
+            if(path.getString(0)!="null") {
+                for (int i = 1; i < path.length(); i++) {
+                    //new StopInformation
+                    StopInformation stop_obj = new StopInformation();
 
-                JSONObject obj = path.getJSONObject(i);
-                stop_obj.type = obj.getString("type");
-                Double location_lat = obj.getJSONObject("latLng").getDouble("lat");
-                Double location_lng = obj.getJSONObject("latLng").getDouble("lng");
+                    JSONObject obj = path.getJSONObject(i);
+                    stop_obj.type = obj.getString("type");
+                    Double location_lat = obj.getJSONObject("latLng").getDouble("lat");
+                    Double location_lng = obj.getJSONObject("latLng").getDouble("lng");
 
-                stop_obj.location = new LatLng(location_lat, location_lng);
+                    stop_obj.location = new LatLng(location_lat, location_lng);
 
-                stop_obj.name = obj.getJSONObject("user").getString("first_name") + " " + obj.getJSONObject("user").getString("last_name");
-                stop_obj.student_id = obj.getJSONObject("user").getString("sjsu_id");
-                stops.add(stop_obj);
+                    stop_obj.name = obj.getJSONObject("user").getString("first_name") + " " + obj.getJSONObject("user").getString("last_name");
+                    stop_obj.student_id = obj.getJSONObject("user").getString("sjsu_id");
+                    stops.add(stop_obj);
+                }
+            }
+            else {
+                stops = new ArrayList<StopInformation>();
             }
             updateStops();
         } catch (JSONException e) {
@@ -390,6 +405,7 @@ public class DriverMapsActivity extends AppCompatActivity
 
     public void updateStops() {
         //To populate this list from the MapQuest JSON response
+        clearMap();
         Geocoder geocoder = new Geocoder(getApplicationContext(), Locale.getDefault());
         stoparr=new ArrayList<String>();
 
@@ -442,8 +458,7 @@ public class DriverMapsActivity extends AppCompatActivity
         });
     }
 
-    private void displayPoints(int position) {
-        LatLng dest = new LatLng(stops.get(position).location.latitude, stops.get(position).location.longitude);
+    public void clearMap(){
         mMap.clear();
 
         MarkerOptions options = new MarkerOptions();
@@ -452,6 +467,11 @@ public class DriverMapsActivity extends AppCompatActivity
         mMap.addMarker(new MarkerOptions().position(current_location).title("Shuttle Location").icon(BitmapDescriptorFactory.fromBitmap(smallMarker)));
         mMap.moveCamera(CameraUpdateFactory.newLatLng(current_location));
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(current_location, 15));
+    }
+
+    private void displayPoints(int position) {
+        LatLng dest = new LatLng(stops.get(position).location.latitude, stops.get(position).location.longitude);
+        clearMap();
 
         //Display Marker for next stop
         if ((stops.get(position).type).equalsIgnoreCase("pick")) {
@@ -655,25 +675,28 @@ public class DriverMapsActivity extends AppCompatActivity
         }
     }
 
-    public void makePutCall(JSONObject params, JSONObject authObj, String api) throws JSONException, UnsupportedEncodingException {
+    public void makePutCall(String student_id, String api) throws JSONException, UnsupportedEncodingException {
 
+        JSONObject student = new JSONObject();
+        student.put("sjsu_id",student_id);
         AsyncHttpClient client = new AsyncHttpClient();
-        StringEntity entity = new StringEntity(params.toString());
-        client.addHeader("Authorization", "Token " + authObj.getString("token"));
+        StringEntity entity = new StringEntity(student.toString());
+        client.addHeader("Authorization", "Token " + DriverMapsActivity.authObj.getString("token"));
         client.addHeader("Content-Type", "application/json");
         client.addHeader("Accept", "application/json");
 
-        client.put(context, baseUrl + api, entity, "application/json", new AsyncHttpResponseHandler() {
+        client.put(context, baseUrl + api, entity, "application/json", new JsonHttpResponseHandler() {
 
             @Override
-            public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
+            public void onSuccess(int statusCode, Header[] headers, JSONObject responseBody) {
 
                 Log.d("Return Status", "Status Code: b.b@sjsu.edu    " + statusCode);
+                updateRoute(responseBody.toString());
 
             }
 
             @Override
-            public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
+            public void onFailure(int statusCode, Header[] headers, Throwable error, JSONObject responseBody) {
 
                 // When Http response code is '404'
                 if (statusCode == 404) {
