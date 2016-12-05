@@ -32,7 +32,9 @@
         android:text="Scan Barcode"
         android:onClick="scanBarCode"
         android:layout_centerHorizontal="true"
-        android:layout_centerVertical="true"/>
+        android:layout_centerVertical="true"
+        android:background="#0462AC"
+        android:textColor="@android:color/white"/>
 
         </RelativeLayout>
     <View
@@ -62,7 +64,9 @@
             android:layout_centerVertical="true"
             android:layout_centerHorizontal="true"
             android:id="@+id/submit"
-            android:onClick="pickedStudent"/>
+            android:onClick="pickedStudent"
+            android:background="#0462AC"
+            android:textColor="@android:color/white"/>
 
 
 

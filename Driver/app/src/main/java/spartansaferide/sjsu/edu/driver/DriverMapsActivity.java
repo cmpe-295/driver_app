@@ -33,7 +33,6 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -48,6 +47,9 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.firebase.iid.FirebaseInstanceId;
+import com.loopj.android.http.AsyncHttpClient;
+import com.loopj.android.http.AsyncHttpResponseHandler;
+import com.loopj.android.http.JsonHttpResponseHandler;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -60,16 +62,10 @@ import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-
-import com.loopj.android.http.AsyncHttpClient;
-import com.loopj.android.http.AsyncHttpResponseHandler;
-import com.loopj.android.http.JsonHttpResponseHandler;
-import com.loopj.android.http.RequestParams;
 
 import cz.msebera.android.httpclient.Header;
 import cz.msebera.android.httpclient.entity.StringEntity;
@@ -92,14 +88,8 @@ public class DriverMapsActivity extends AppCompatActivity
     Bitmap smallMarker;
     String refreshedToken;
     static String baseUrl = "http://saferide.nagkumar.com/";
-//    String notification = "{\"path\":\n" +
-//            "[{\"eta\":0,\"user\":\"driver\",\"latLng\":{\"lng\":-121.879737,\"lat\":37.333163}},\n" +
-//            "\t{\"ride_id\":10,\"eta\":135,\"type\":\"pick\",\"user\":{\"latitude\":null,\"sjsu_id\":\"010095345\",\"last_name\":\"Arkalgud\",\"id\":1,\"first_name\":\"Nagkumar\",\"longitude\":null},\"latLng\":{\"lng\":-121.879737,\"lat\":37.333163}},{\"ride_id\":4,\"eta\":237,\"type\":\"drop\",\"user\":{\"latitude\":null,\"sjsu_id\":\"1111111\",\"last_name\":\"gupta\",\"id\":3,\"first_name\":\"balaji\",\"longitude\":null},\"latLng\":{\"lng\":-121.873226,\"lat\":37.331983}},{\"ride_id\":3,\"eta\":237,\"type\":\"pick\",\"user\":{\"latitude\":null,\"sjsu_id\":\"10101010\",\"last_name\":\"jayadev\",\"id\":2,\"first_name\":\"varsha\",\"longitude\":null},\"latLng\":{\"lng\":-121.883569,\"lat\":37.327444}}]}";
-//    static String baseUrl = "http://saferide.nagkumar.com/";
-
-   static JSONObject authObj;
+    static JSONObject authObj;
     String sid;
-    String sname;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -114,7 +104,6 @@ public class DriverMapsActivity extends AppCompatActivity
         context = getApplicationContext();
 
         rides = (ListView) findViewById(R.id.rides);
-
 
         BitmapDrawable bitmapdraw = (BitmapDrawable) getResources().getDrawable(R.drawable.bus_icon);
         Bitmap b = bitmapdraw.getBitmap();
@@ -156,7 +145,6 @@ public class DriverMapsActivity extends AppCompatActivity
             NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
             navigationView.setNavigationItemSelectedListener(this);
 
-            //new
             SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                     .findFragmentById(R.id.map);
             mapFragment.getMapAsync(this);
@@ -167,9 +155,6 @@ public class DriverMapsActivity extends AppCompatActivity
             //1. Initialize the locationManager and the provider
             locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
             provider = locationManager.getBestProvider(new Criteria(), false); //To return only enabled providers
-
-//            parseNotifcation(notification);
-
         }
         createthread();
     }
@@ -208,7 +193,7 @@ public class DriverMapsActivity extends AppCompatActivity
 
     @Override
     public void onBackPressed() {
-        super.onBackPressed();
+//        super.onBackPressed();
     }
 
     @SuppressWarnings("StatementWithEmptyBody")
@@ -336,6 +321,7 @@ public class DriverMapsActivity extends AppCompatActivity
 
     public void updateRoute(String newRoute){
         //parse JSON
+        stops = new ArrayList<StopInformation>();
 
         try {
             JSONObject response = new JSONObject(newRoute);
@@ -356,9 +342,6 @@ public class DriverMapsActivity extends AppCompatActivity
                     stop_obj.student_id = obj.getJSONObject("user").getString("sjsu_id");
                     stops.add(stop_obj);
                 }
-            }
-            else {
-                stops = new ArrayList<StopInformation>();
             }
             updateStops();
         } catch (JSONException e) {
@@ -394,9 +377,6 @@ public class DriverMapsActivity extends AppCompatActivity
             return;
         }
         Location location = locationManager.getLastKnownLocation(provider);
-
-        //populate list of stops
-        //updateStops();
 
         if (location != null) {
             onLocationChanged(location);

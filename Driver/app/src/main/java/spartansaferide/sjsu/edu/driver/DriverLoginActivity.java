@@ -89,6 +89,11 @@ public class DriverLoginActivity extends AppCompatActivity {
 
     }
 
+    @Override
+    public void onBackPressed() {
+//        super.onBackPressed();
+    }
+
     public void invokeWS(RequestParams params){
         // Show Progress Dialog
         prgDialog.show();
