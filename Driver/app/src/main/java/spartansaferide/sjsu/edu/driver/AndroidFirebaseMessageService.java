@@ -16,22 +16,17 @@ import com.google.firebase.messaging.RemoteMessage;
  */
 public class AndroidFirebaseMessageService extends FirebaseMessagingService {
 
-    private static final String TAG = "SafeRideMsgService";
-    DriverMapsActivity driverMaps;
-
     @Override
     public void onMessageReceived(RemoteMessage remoteMessage) {
 
         createNotification();
-
-        Notification.getInstance().message = remoteMessage.getNotification().getBody();;
+        Notification.getInstance().message = remoteMessage.getNotification().getBody();
     }
 
     private void createNotification() {
         Intent intent = new Intent(this, DriverMapsActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        PendingIntent resultIntent = PendingIntent.getActivity(this, 0, intent,
-                PendingIntent.FLAG_ONE_SHOT);
+        PendingIntent resultIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_ONE_SHOT);
 
         Uri notificationSoundURI = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
         NotificationCompat.Builder mNotificationBuilder = new NotificationCompat.Builder(this)
