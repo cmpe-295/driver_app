@@ -1,38 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                xmlns:tools="http://schemas.android.com/tools"
-                android:id="@+id/activity_driver_login"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:paddingBottom="@dimen/activity_vertical_margin"
-                android:paddingLeft="@dimen/activity_horizontal_margin"
-                android:paddingRight="@dimen/activity_horizontal_margin"
-                android:paddingTop="@dimen/activity_vertical_margin"
-                tools:context="spartansaferide.sjsu.edu.driver.DriverLoginActivity"
-                android:gravity="center_vertical|center_horizontal">
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/activity_driver_login"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center_vertical|center_horizontal"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    tools:context="spartansaferide.sjsu.edu.driver.DriverLoginActivity">
 
-    <ImageView android:layout_width="fill_parent"
-               android:layout_height="fill_parent"
-               android:src="@drawable/sjsu_spartan_logo"
-        android:id="@+id/background_img"/>
+    <ImageView
+        android:id="@+id/background_img"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:src="@drawable/sjsu_spartan_logo" />
+
     <TextView
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="10dp"
         android:text="@string/login_title"
-        android:textSize="25sp"
-        android:textStyle="bold"
         android:textAlignment="center"
-        android:textColor="#0462AC"/>
-
+        android:textColor="#0462AC"
+        android:textSize="25sp"
+        android:textStyle="bold" />
 
     <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="10dp"
         android:layout_centerHorizontal="true"
-        android:layout_centerVertical="true">
+        android:layout_centerVertical="true"
+        android:orientation="vertical"
+        android:padding="10dp">
 
         <TextView
             android:layout_width="fill_parent"
@@ -40,8 +41,7 @@
             android:layout_marginTop="5dp"
             android:text="@string/email"
             android:textColor="@android:color/black"
-            android:textStyle="bold"/>
-
+            android:textStyle="bold" />
 
         <EditText
             android:id="@+id/loginEmail"
@@ -49,8 +49,8 @@
             android:layout_height="wrap_content"
             android:hint="Enter your Email ID"
             android:inputType="textEmailAddress"
-            android:textColorLink="#0462AC"
-            android:textColorHighlight="#0462AC"/>
+            android:textColorHighlight="#0462AC"
+            android:textColorLink="#0462AC" />
 
         <TextView
             android:layout_width="fill_parent"
@@ -58,7 +58,7 @@
             android:layout_marginTop="15dp"
             android:text="Password"
             android:textColor="@android:color/black"
-            android:textStyle="bold"/>
+            android:textStyle="bold" />
 
         <EditText
             android:id="@+id/loginPassword"
@@ -66,8 +66,8 @@
             android:layout_height="wrap_content"
             android:hint="Enter Password"
             android:inputType="textPassword"
-            android:textColorLink="#0462AC"
-            android:textColorHighlight="#0462AC"/>
+            android:textColorHighlight="#0462AC"
+            android:textColorLink="#0462AC" />
 
         <TextView
             android:id="@+id/login_error"
@@ -87,15 +87,5 @@
             android:text="Login"
             android:textColor="@android:color/white" />
 
-        <!--<ImageView-->
-            <!--android:layout_width="50dp"-->
-            <!--android:layout_height="50dp"-->
-            <!--app:srcCompat="@drawable/checkmark"-->
-            <!--android:id="@+id/checkmark"-->
-            <!--android:layout_gravity="center_vertical|center_horizontal"-->
-            <!--android:contentDescription="" />-->
-
     </LinearLayout>
-
-
 </RelativeLayout>

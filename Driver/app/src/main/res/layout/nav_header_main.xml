@@ -18,7 +18,6 @@
         android:layout_height="75dp"
         android:paddingTop="@dimen/nav_header_vertical_spacing"
         app:srcCompat="@mipmap/spartan_logo" />
-    <!--app:srcCompat="@android:drawable/sym_def_app_icon"-->
 
     <TextView
         android:layout_width="match_parent"
