@@ -31,6 +31,8 @@ public class DriverLoginActivity extends AppCompatActivity {
     // Passwprd Edit View Object
     EditText pwdET;
 
+    ImageView backgroundImage;
+
     //ImageView checkMark;
 
     @Override
@@ -50,6 +52,9 @@ public class DriverLoginActivity extends AppCompatActivity {
         prgDialog.setMessage("Please wait...");
         // Set Cancelable as False
         prgDialog.setCancelable(false);
+
+        backgroundImage = (ImageView) findViewById(R.id.background_img);
+        backgroundImage.setAlpha(50);
 
 //        checkMark = (ImageView) findViewById(R.id.checkmark);
 //        checkMark.animate().alpha(0f);
