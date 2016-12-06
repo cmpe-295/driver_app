@@ -1,35 +1,29 @@
 package spartansaferide.sjsu.edu.driver;
 
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.content.DialogInterface;
-import android.content.SharedPreferences;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
-import android.widget.EditText;
-import android.widget.TextView;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v7.app.AlertDialog;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.common.api.CommonStatusCodes;
-import com.google.android.gms.drive.Drive;
 import com.google.android.gms.vision.barcode.Barcode;
 import com.loopj.android.http.AsyncHttpClient;
-import com.loopj.android.http.AsyncHttpResponseHandler;
 import com.loopj.android.http.JsonHttpResponseHandler;
-import com.loopj.android.http.RequestParams;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
-import java.util.regex.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import cz.msebera.android.httpclient.Header;
 import cz.msebera.android.httpclient.entity.StringEntity;
@@ -41,10 +35,9 @@ public class BarcodeScannerActivity extends AppCompatActivity {
 
     TextView barcodeResult;
     EditText studentid;
-    String sid="";
-    String sname="";
+    String sid = "";
+    String sname = "";
     ProgressDialog prgDialog;
-    RequestParams params = new RequestParams();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,20 +53,18 @@ public class BarcodeScannerActivity extends AppCompatActivity {
 
         Intent i = getIntent();
         sid = i.getStringExtra("id");
-        sname =i.getStringExtra("name");
-
+        sname = i.getStringExtra("name");
 
         getSupportActionBar().setTitle("Scan/Enter Student Barcode");
     }
 
     /* Add a click event to the scan_barcode button to launch the ScanBarcodeActivity */
     public void scanBarCode(View v) {
-        Intent intent = new Intent(this,ScanBarcodeActivity.class);
-        startActivityForResult(intent,0);
+        Intent intent = new Intent(this, ScanBarcodeActivity.class);
+        startActivityForResult(intent, 0);
     }
 
     /* Override onActivityResult to get the barcode from ScanBarcodeActivity */
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == 0) {
@@ -81,7 +72,7 @@ public class BarcodeScannerActivity extends AppCompatActivity {
                 if (data != null) {
                     //Check for the barcode and Display the value
                     Barcode barcode = data.getParcelableExtra("barcodes");
-                    Log.d("test",barcode.displayValue);
+                    Log.d("test", barcode.displayValue);
 
                     barcodeResult.setText("Student ID : " + barcode.displayValue);
                     validateStudentId(barcode.displayValue.toString());
@@ -90,32 +81,28 @@ public class BarcodeScannerActivity extends AppCompatActivity {
                     barcodeResult.setText("No barcode found");
                 }
             }
-        }
-        else {
+        } else {
             super.onActivityResult(requestCode, resultCode, data);
         }
     }
 
+    public void pickedStudent(View view) {
 
-    public void pickedStudent(View view){
-
-        String student_id=  studentid.getText().toString();
+        String student_id = studentid.getText().toString();
 
         validateStudentId(student_id);
-
     }
 
-    public void validateStudentId(String id){
+    public void validateStudentId(String id) {
 
         Pattern p = Pattern.compile("[0-9]{9}");
         Matcher m = p.matcher(id);
 
-        if(m.matches() && id.equals(sid)){
-
+        if (m.matches() && id.equals(sid)) {
 
             AlertDialog.Builder alert = new AlertDialog.Builder(this).setTitle("Confirm Pick-up")
-                    .setMessage("Picked up "+sname+"?").setCancelable(true)
-                    .setPositiveButton("Yes",new DialogInterface.OnClickListener() {
+                    .setMessage("Picked up " + sname + "?").setCancelable(true)
+                    .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
                             try {
                                 updatePickUp("ride/pickup_client/");
@@ -124,40 +111,36 @@ public class BarcodeScannerActivity extends AppCompatActivity {
                             } catch (UnsupportedEncodingException e) {
                                 e.printStackTrace();
                             }
-                            //finish();
                         }
                     })
-                    .setNegativeButton("No",new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog,int id) {
+                    .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
                             // if this button is clicked, just close the dialog box and do nothing
                             dialog.cancel();
                         }
                     });
-            ;
-            final AlertDialog dialog= alert.create();
+            final AlertDialog dialog = alert.create();
             dialog.show();
 
-        }
-        else {
+        } else {
             //Toast.makeText(getBaseContext(),"Invalid studentid",Toast.LENGTH_SHORT).show();
             AlertDialog.Builder alert = new AlertDialog.Builder(this).setTitle("Invalid Student ID")
                     .setMessage("Enter Correct Student ID").setCancelable(true)
-                    .setNegativeButton("OK",new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog,int id) {
+                    .setNegativeButton("OK", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
                             // if this button is clicked, just close the dialog box and do nothing
                             dialog.cancel();
                         }
                     });
-            ;
-            final AlertDialog dialog= alert.create();
+            final AlertDialog dialog = alert.create();
             dialog.show();
         }
     }
 
     public void updatePickUp(String api) throws JSONException, UnsupportedEncodingException {
-        //params.put("sjsu_id",sid);
+
         JSONObject student = new JSONObject();
-        student.put("sjsu_id",sid);
+        student.put("sjsu_id", sid);
         AsyncHttpClient client = new AsyncHttpClient();
         StringEntity entity = new StringEntity(student.toString());
         client.addHeader("Authorization", "Token " + DriverMapsActivity.authObj.getString("token"));
@@ -170,21 +153,16 @@ public class BarcodeScannerActivity extends AppCompatActivity {
             public void onSuccess(int statusCode, Header[] headers, JSONObject responseBody) {
 
                 try {
-                    //String str = new String(responseBody, "UTF-8");
                     JSONArray response = responseBody.getJSONArray("route");
-                   // Intent i = new Intent();
-
-                    setResult(RESULT_OK, getIntent().putExtra("response",responseBody.toString()));
-                   // JSONArray arr = new JSONArray(new String(responseBody));
+                    setResult(RESULT_OK, getIntent().putExtra("response", responseBody.toString()));
 
                 } catch (JSONException e) {
                     Intent i = new Intent();
                     setResult(2, i);
                 }
 
-                Log.d("Return Status", "Status Code: b.b@sjsu.edu    " + statusCode);
+                Log.d("Return Status", "Status Code:" + statusCode);
                 finish();
-
             }
 
             @Override
@@ -206,9 +184,8 @@ public class BarcodeScannerActivity extends AppCompatActivity {
         });
     }
 
-
     @Override
-    public void onBackPressed(){
+    public void onBackPressed() {
         super.onBackPressed();
     }
 }
