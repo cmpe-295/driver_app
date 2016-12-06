@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Driver</string>
+    <string name="app_name">Safe Ride Driver</string>
     <string name="login_title">Driver Login</string>
     <string name="title_activity_main">Driver Map</string>
 
