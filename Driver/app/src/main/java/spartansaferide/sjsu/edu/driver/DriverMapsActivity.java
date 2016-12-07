@@ -243,12 +243,14 @@ public class DriverMapsActivity extends AppCompatActivity
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return;
         }
-        mMap.setMyLocationEnabled(true);
+
+     //   mMap.setMyLocationEnabled(true);
         mMap.getUiSettings().setMyLocationButtonEnabled(true);
 
-        mMap.addMarker(new MarkerOptions().position(current_location).title("Shuttle Location").icon(BitmapDescriptorFactory.fromBitmap(smallMarker)));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(current_location));
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(current_location, 15));
+//        mMap.addMarker(new MarkerOptions().position(current_location).title("Shuttle Location").bus_icon(BitmapDescriptorFactory.fromBitmap(smallMarker)));
+//        mMap.moveCamera(CameraUpdateFactory.newLatLng(current_location));
+//        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(current_location, 15));
+        clearMap();
 
         //Call API to update Driver Location
         authCode = getApplicationContext().getSharedPreferences("spartansaferide.sjsu.edu.driver", Context.MODE_PRIVATE).getString("authcode", "");
@@ -315,8 +317,10 @@ public class DriverMapsActivity extends AppCompatActivity
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        stops = new ArrayList<StopInformation>();
-        updateRoute(data.getStringExtra("response"));
+        //stops = new ArrayList<StopInformation>();
+        if(!(data.getStringExtra("response").equals("none"))) {
+            updateRoute(data.getStringExtra("response"));
+        }
     }
 
     public void updateRoute(String newRoute){

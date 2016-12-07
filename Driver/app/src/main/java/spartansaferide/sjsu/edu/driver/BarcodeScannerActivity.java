@@ -185,7 +185,9 @@ public class BarcodeScannerActivity extends AppCompatActivity {
     }
 
     @Override
-    public void onBackPressed() {
+    public void onBackPressed(){
+
+        setResult(RESULT_OK, getIntent().putExtra("response","none"));
         super.onBackPressed();
     }
 }
