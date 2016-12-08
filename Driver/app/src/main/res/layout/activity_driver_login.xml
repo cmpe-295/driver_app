@@ -21,7 +21,7 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="10dp"
-        android:text="@string/login_title"
+        android:text="Spartan Saferide Driver"
         android:textAlignment="center"
         android:textColor="#0462AC"
         android:textSize="25sp"
@@ -50,7 +50,9 @@
             android:hint="Enter your Email ID"
             android:inputType="textEmailAddress"
             android:textColorHighlight="#0462AC"
+            android:textColorLink="#0462AC" />
             android:textColorLink="#0462AC"
+            android:textColorHighlight="#0462AC"
             android:backgroundTint="@android:color/black"/>
 
         <TextView
@@ -59,7 +61,7 @@
             android:layout_marginTop="15dp"
             android:text="Password"
             android:textColor="@android:color/black"
-            android:textStyle="bold" />
+            android:textStyle="bold"/>
 
         <EditText
             android:id="@+id/loginPassword"
@@ -67,8 +69,8 @@
             android:layout_height="wrap_content"
             android:hint="Enter Password"
             android:inputType="textPassword"
-            android:textColorHighlight="#0462AC"
-            android:textColorLink="#0462AC" />
+            android:textColorLink="#0462AC"
+            android:textColorHighlight="#0462AC"/>
 
         <TextView
             android:id="@+id/login_error"
@@ -88,5 +90,15 @@
             android:text="Login"
             android:textColor="@android:color/white" />
 
+        <!--<ImageView-->
+            <!--android:layout_width="50dp"-->
+            <!--android:layout_height="50dp"-->
+            <!--app:srcCompat="@drawable/checkmark"-->
+            <!--android:id="@+id/checkmark"-->
+            <!--android:layout_gravity="center_vertical|center_horizontal"-->
+            <!--android:contentDescription="" />-->
+
     </LinearLayout>
+
+
 </RelativeLayout>

@@ -75,7 +75,7 @@ public class DriverMapsActivity extends AppCompatActivity
 
     private GoogleMap mMap;
     Thread thread;
-    boolean stop=false;
+    boolean stop = false;
     LocationManager locationManager;
     String provider;
     static Context context;
@@ -204,9 +204,11 @@ public class DriverMapsActivity extends AppCompatActivity
 
         if (id == R.id.logout) {
             logOut();
-            Intent logout = new Intent(DriverMapsActivity.this, DriverLoginActivity.class);
-            startActivity(logout);
+//            Intent logout = new Intent(DriverMapsActivity.this, DriverLoginActivity.class);
+//            startActivity(logout);
+            setResult(RESULT_OK, getIntent().putExtra("response","none"));
             Toast.makeText(this, "Logged Out", Toast.LENGTH_SHORT).show();
+            finish();
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -215,7 +217,6 @@ public class DriverMapsActivity extends AppCompatActivity
     }
 
     private void logOut() {
-        //To make API Call for logging out the user
 
         SharedPreferences preferences = getSharedPreferences("spartansaferide.sjsu.edu.driver", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
@@ -244,12 +245,8 @@ public class DriverMapsActivity extends AppCompatActivity
             return;
         }
 
-     //   mMap.setMyLocationEnabled(true);
         mMap.getUiSettings().setMyLocationButtonEnabled(true);
 
-//        mMap.addMarker(new MarkerOptions().position(current_location).title("Shuttle Location").bus_icon(BitmapDescriptorFactory.fromBitmap(smallMarker)));
-//        mMap.moveCamera(CameraUpdateFactory.newLatLng(current_location));
-//        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(current_location, 15));
         clearMap();
 
         //Call API to update Driver Location
@@ -262,7 +259,6 @@ public class DriverMapsActivity extends AppCompatActivity
             params.put(new String("latitude"), String.valueOf(current_location.latitude));
             params.put(new String("longitude"), String.valueOf(current_location.longitude));
 
-            //Update shuttle location to the server
             makePostCall(params, authObj, "ride/update_driver_location/");
         } catch (JSONException e) {
             e.printStackTrace();
@@ -274,7 +270,6 @@ public class DriverMapsActivity extends AppCompatActivity
             @Override
             public boolean onMarkerClick(Marker marker) {
 
-                //LatLng position = marker.getPosition();
                 for (StopInformation s : stops) {
                     if (s.student_id == sid) {
                         if (s.type.equals("pick")) {
@@ -302,7 +297,6 @@ public class DriverMapsActivity extends AppCompatActivity
                                             dialog.cancel();
                                         }
                                     });
-                            ;
                             final AlertDialog dialog = alert.create();
                             dialog.show();
 
@@ -317,20 +311,20 @@ public class DriverMapsActivity extends AppCompatActivity
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        //stops = new ArrayList<StopInformation>();
-        if(!(data.getStringExtra("response").equals("none"))) {
+
+        if (!(data.getStringExtra("response").equals("none"))) {
             updateRoute(data.getStringExtra("response"));
         }
     }
 
-    public void updateRoute(String newRoute){
+    public void updateRoute(String newRoute) {
         //parse JSON
         stops = new ArrayList<StopInformation>();
 
         try {
             JSONObject response = new JSONObject(newRoute);
             JSONArray path = response.getJSONArray("route");
-            if(path.getString(0)!="null") {
+            if (path.getString(0) != "null") {
                 for (int i = 1; i < path.length(); i++) {
                     //new StopInformation
                     StopInformation stop_obj = new StopInformation();
@@ -351,7 +345,6 @@ public class DriverMapsActivity extends AppCompatActivity
         } catch (JSONException e) {
             e.printStackTrace();
         }
-
     }
 
     @Override
@@ -391,7 +384,7 @@ public class DriverMapsActivity extends AppCompatActivity
         //To populate this list from the MapQuest JSON response
         clearMap();
         Geocoder geocoder = new Geocoder(getApplicationContext(), Locale.getDefault());
-        stoparr=new ArrayList<String>();
+        stoparr = new ArrayList<String>();
 
         for (StopInformation i : stops) {
             try {
@@ -419,8 +412,6 @@ public class DriverMapsActivity extends AppCompatActivity
                 //  Toast.makeText(DriverMapsActivity.this, "Option Selected: " + item, Toast.LENGTH_LONG).show();
 
                 sid = stops.get(position).student_id;
-//                sname=stops.get(position).name;
-//                trip_type=stops.get(position).type;
 
                 displayPoints(position);
             }
@@ -442,7 +433,7 @@ public class DriverMapsActivity extends AppCompatActivity
         });
     }
 
-    public void clearMap(){
+    public void clearMap() {
         mMap.clear();
 
         MarkerOptions options = new MarkerOptions();
@@ -465,9 +456,6 @@ public class DriverMapsActivity extends AppCompatActivity
             Marker m = mMap.addMarker(new MarkerOptions().position(dest).title("drop")
                     .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
         }
-
-        //Draw the route to the pickup point
-        //drawMarker(dest);
 
         // Getting URL to the Google Directions API
         String url = getDirectionsUrl(current_location, dest);
@@ -504,31 +492,17 @@ public class DriverMapsActivity extends AppCompatActivity
 
     private String getDirectionsUrl(LatLng origin, LatLng dest) {
 
-        // Origin of route
         String str_origin = "origin=" + origin.latitude + "," + origin.longitude;
-
-        // Destination of route
-        //String str_dest = "destination=37.339089,-121.893048";
         String str_dest = "destination=" + dest.latitude + "," + dest.longitude;
-        // Sensor enabled
         String sensor = "sensor=false";
-
-        // Building the parameters to the web service
         String parameters = str_origin + "&" + str_dest + "&" + sensor;
-
-        // Output format
         String output = "json";
-
-        // Building the url to the web service
         String url = "https://maps.googleapis.com/maps/api/directions/" + output + "?" + parameters;
 
         return url;
     }
 
-    /**
-     * A method to download json data from url
-     */
-    private String downloadUrl(String strUrl) throws IOException {
+    private String downloadJSONFromURL(String strUrl) throws IOException {
         String data = "";
         InputStream iStream = null;
         HttpURLConnection urlConnection = null;
@@ -567,7 +541,7 @@ public class DriverMapsActivity extends AppCompatActivity
     }
 
     /**
-     * A class to download data from Google Directions URL
+     * Class to download data from Google Directions URL
      */
     private class DownloadTask extends AsyncTask<String, Void, String> {
 
@@ -580,7 +554,7 @@ public class DriverMapsActivity extends AppCompatActivity
 
             try {
                 // Fetching the data from web service
-                data = downloadUrl(url[0]);
+                data = downloadJSONFromURL(url[0]);
             } catch (Exception e) {
                 Log.d("Background Task", e.toString());
             }
@@ -592,17 +566,14 @@ public class DriverMapsActivity extends AppCompatActivity
         protected void onPostExecute(String result) {
             super.onPostExecute(result);
 
-            ParserTask parserTask = new ParserTask();
+            ParseGoogleDirections parserTask = new ParseGoogleDirections();
 
             // Invokes the thread for parsing the JSON data
             parserTask.execute(result);
         }
     }
 
-    /**
-     * A class to parse the Google Directions in JSON format
-     */
-    private class ParserTask extends AsyncTask<String, Integer, List<List<HashMap<String, String>>>> {
+    private class ParseGoogleDirections extends AsyncTask<String, Integer, List<List<HashMap<String, String>>>> {
 
         // Parsing the data in non-ui thread
         @Override
@@ -613,7 +584,7 @@ public class DriverMapsActivity extends AppCompatActivity
 
             try {
                 jObject = new JSONObject(jsonData[0]);
-                DirectionsJSONParser parser = new DirectionsJSONParser();
+                DirectionsParser parser = new DirectionsParser();
 
                 // Starts parsing data
                 routes = parser.parse(jObject);
@@ -626,13 +597,13 @@ public class DriverMapsActivity extends AppCompatActivity
         // Executes in UI thread, after the parsing process
         @Override
         protected void onPostExecute(List<List<HashMap<String, String>>> result) {
-            ArrayList<LatLng> points = null;
-            PolylineOptions lineOptions = null;
+            ArrayList<LatLng> myPoints = null;
+            PolylineOptions myLineOptions = null;
 
             // Traversing through all the routes
             for (int i = 0; i < result.size(); i++) {
-                points = new ArrayList<LatLng>();
-                lineOptions = new PolylineOptions();
+                myPoints = new ArrayList<LatLng>();
+                myLineOptions = new PolylineOptions();
 
                 // Fetching i-th route
                 List<HashMap<String, String>> path = result.get(i);
@@ -645,24 +616,24 @@ public class DriverMapsActivity extends AppCompatActivity
                     double lng = Double.parseDouble(point.get("lng"));
                     LatLng position = new LatLng(lat, lng);
 
-                    points.add(position);
+                    myPoints.add(position);
                 }
 
                 // Adding all the points in the route to LineOptions
-                lineOptions.addAll(points);
-                lineOptions.width(10);
-                lineOptions.color(Color.BLUE);
+                myLineOptions.addAll(myPoints);
+                myLineOptions.width(10);
+                myLineOptions.color(Color.BLUE);
             }
 
             // Drawing polyline in the Google Map for the i-th route
-            mMap.addPolyline(lineOptions);
+            mMap.addPolyline(myLineOptions);
         }
     }
 
     public void makePutCall(String student_id, String api) throws JSONException, UnsupportedEncodingException {
 
         JSONObject student = new JSONObject();
-        student.put("sjsu_id",student_id);
+        student.put("sjsu_id", student_id);
         AsyncHttpClient client = new AsyncHttpClient();
         StringEntity entity = new StringEntity(student.toString());
         client.addHeader("Authorization", "Token " + DriverMapsActivity.authObj.getString("token"));
@@ -676,7 +647,6 @@ public class DriverMapsActivity extends AppCompatActivity
 
                 Log.d("Return Status", "Status Code: b.b@sjsu.edu    " + statusCode);
                 updateRoute(responseBody.toString());
-
             }
 
             @Override
@@ -733,17 +703,17 @@ public class DriverMapsActivity extends AppCompatActivity
         });
     }
 
-    public void createthread(){
-        thread=new Thread(new Runnable() {
+    public void createthread() {
+        thread = new Thread(new Runnable() {
             public void run() {
                 stops = new ArrayList<StopInformation>();
-                Log.d("parseNotifcation:  ",Notification.getInstance().message);
+                Log.d("parseNotifcation:  ", Notification.getInstance().message);
 
-                while(!stop && Notification.getInstance().message!=""){
+                while (!stop && Notification.getInstance().message != "") {
                     // Log.i("herer","response");
                     try {
-                        String mesg=Notification.getInstance().message;
-                        Notification.getInstance().message="";
+                        String mesg = Notification.getInstance().message;
+                        Notification.getInstance().message = "";
                         JSONObject newNotification = new JSONObject(mesg);
                         JSONArray path = newNotification.getJSONArray("path");
                         for (int i = 1; i < path.length(); i++) {
@@ -762,11 +732,11 @@ public class DriverMapsActivity extends AppCompatActivity
                             stops.add(stop_obj);
                         }
                         DriverMapsActivity.this.runOnUiThread(new Runnable() {
+
                             @Override
                             public void run() {
 
                                 updateStops();
-
                             }
                         });
                     } catch (JSONException e) {
@@ -777,5 +747,4 @@ public class DriverMapsActivity extends AppCompatActivity
         });
         thread.start();
     }
-
 }

@@ -2,9 +2,11 @@ package spartansaferide.sjsu.edu.driver;
 
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -90,12 +92,21 @@ public class DriverLoginActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-//        super.onBackPressed();
+        prgDialog.dismiss();
+        finish();
+        super.onBackPressed();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        driverEmail.setText("");
+        driverPassword.setText("");
     }
 
     public void invokeWS(RequestParams params) {
         // Show Progress Dialog
-        prgDialog.show();
+       prgDialog.show();
         // Make RESTful webservice call using AsyncHttpClient object
         AsyncHttpClient client = new AsyncHttpClient();
         client.post("http://saferide.nagkumar.com/login/", params, new AsyncHttpResponseHandler() {
@@ -143,7 +154,7 @@ public class DriverLoginActivity extends AppCompatActivity {
     public void navigatetoHomeActivity() {
         Intent homeIntent = new Intent(getApplicationContext(), DriverMapsActivity.class);
         homeIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        startActivity(homeIntent);
+        startActivityForResult(homeIntent,1);
 
         Log.d(TAG, "Success Login");
     }
