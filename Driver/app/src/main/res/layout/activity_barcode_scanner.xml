@@ -51,7 +51,7 @@
         <EditText
             android:layout_width="200dp"
             android:layout_height="wrap_content"
-            android:inputType="textPersonName"
+            android:inputType="number"
             android:id="@+id/studentid"
             android:hint="Enter Student ID"
             android:layout_centerHorizontal="true"

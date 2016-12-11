@@ -1,8 +1,11 @@
 package spartansaferide.sjsu.edu.driver;
 
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -38,6 +41,7 @@ public class BarcodeScannerActivity extends AppCompatActivity {
     String sid = "";
     String sname = "";
     ProgressDialog prgDialog;
+    ConnectivityManager cm;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -138,50 +142,75 @@ public class BarcodeScannerActivity extends AppCompatActivity {
     }
 
     public void updatePickUp(String api) throws JSONException, UnsupportedEncodingException {
+        if(checkInternetExists()) {
 
-        JSONObject student = new JSONObject();
-        student.put("sjsu_id", sid);
-        AsyncHttpClient client = new AsyncHttpClient();
-        StringEntity entity = new StringEntity(student.toString());
-        client.addHeader("Authorization", "Token " + DriverMapsActivity.authObj.getString("token"));
-        client.addHeader("Content-Type", "application/json");
-        client.addHeader("Accept", "application/json");
+            JSONObject student = new JSONObject();
+            student.put("sjsu_id", sid);
+            AsyncHttpClient client = new AsyncHttpClient();
+            StringEntity entity = new StringEntity(student.toString());
+            client.addHeader("Authorization", "Token " + DriverMapsActivity.authObj.getString("token"));
+            client.addHeader("Content-Type", "application/json");
+            client.addHeader("Accept", "application/json");
 
-        client.put(context, DriverMapsActivity.baseUrl + api, entity, "application/json", new JsonHttpResponseHandler() {
+            client.put(context, DriverMapsActivity.baseUrl + api, entity, "application/json", new JsonHttpResponseHandler() {
 
-            @Override
-            public void onSuccess(int statusCode, Header[] headers, JSONObject responseBody) {
+                @Override
+                public void onSuccess(int statusCode, Header[] headers, JSONObject responseBody) {
 
-                try {
-                    JSONArray response = responseBody.getJSONArray("route");
-                    setResult(RESULT_OK, getIntent().putExtra("response", responseBody.toString()));
+                    try {
+                        JSONArray response = responseBody.getJSONArray("route");
+                        setResult(RESULT_OK, getIntent().putExtra("response", responseBody.toString()));
 
-                } catch (JSONException e) {
-                    Intent i = new Intent();
-                    setResult(2, i);
+                    } catch (JSONException e) {
+                        Intent i = new Intent();
+                        setResult(2, i);
+                    }
+
+                    Log.d("Return Status", "Status Code:" + statusCode);
+                    finish();
                 }
 
-                Log.d("Return Status", "Status Code:" + statusCode);
-                finish();
-            }
+                @Override
+                public void onFailure(int statusCode, Header[] headers, Throwable error, JSONObject responseBody) {
 
-            @Override
-            public void onFailure(int statusCode, Header[] headers, Throwable error, JSONObject responseBody) {
+                    // When Http response code is '404'
+                    if (statusCode == 404) {
+                        Toast.makeText(getApplicationContext(), "Requested resource not found", Toast.LENGTH_LONG).show();
+                    }
+                    // When Http response code is '500'
+                    else if (statusCode == 500) {
+                        Toast.makeText(getApplicationContext(), "Something went wrong at server end", Toast.LENGTH_LONG).show();
+                    }
+                    // When Http response code other than 404, 500
+                    else {
+                        Toast.makeText(getApplicationContext(), "Unexpected Error occcured! [Most common Error: Device might not be connected to Internet or remote server is not up and running]", Toast.LENGTH_LONG).show();
+                    }
+                }
+            });
+        }
+        else{
+            AlertDialog.Builder dialog = new AlertDialog.Builder(BarcodeScannerActivity.this);
+            dialog.setMessage("No active internet connection. Turn on WiFi or enable mobile data connection");
+            dialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
 
-                // When Http response code is '404'
-                if (statusCode == 404) {
-                    Toast.makeText(getApplicationContext(), "Requested resource not found", Toast.LENGTH_LONG).show();
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    dialog.cancel();
                 }
-                // When Http response code is '500'
-                else if (statusCode == 500) {
-                    Toast.makeText(getApplicationContext(), "Something went wrong at server end", Toast.LENGTH_LONG).show();
-                }
-                // When Http response code other than 404, 500
-                else {
-                    Toast.makeText(getApplicationContext(), "Unexpected Error occcured! [Most common Error: Device might not be connected to Internet or remote server is not up and running]", Toast.LENGTH_LONG).show();
-                }
-            }
-        });
+            });
+            AlertDialog alert = dialog.create();
+            alert.show();
+        }
+    }
+
+    public boolean checkInternetExists() {
+        cm = (ConnectivityManager) this.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        if (activeNetwork != null && activeNetwork.isConnectedOrConnecting()) {
+            return true;
+        }
+        else
+            return false;
     }
 
     @Override

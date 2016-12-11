@@ -5,7 +5,10 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -21,6 +24,8 @@ import com.loopj.android.http.AsyncHttpResponseHandler;
 import com.loopj.android.http.RequestParams;
 
 import cz.msebera.android.httpclient.Header;
+
+import static spartansaferide.sjsu.edu.driver.DriverMapsActivity.context;
 
 public class DriverLoginActivity extends AppCompatActivity {
 
@@ -60,35 +65,55 @@ public class DriverLoginActivity extends AppCompatActivity {
 
     public void loginUser(View view) {
 
-        //Hide Keypad after clicking Login Button
-        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-        imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        ConnectivityManager cm = (ConnectivityManager)this.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        if(activeNetwork != null && activeNetwork.isConnectedOrConnecting()) {
+            int isWiFi = activeNetwork.getType();
 
-        // Get Email Edit View Value
-        String email = driverEmail.getText().toString();
-        // Get Password Edit View Value
-        String password = driverPassword.getText().toString();
-        // Instantiate Http Request Param Object
-        RequestParams params = new RequestParams();
-        // When Email Edit View and Password Edit View have values other than Null
-        if (Validation.isNotNull(email) && Validation.isNotNull(password)) {
-            // When Email entered is Valid
-            if (Validation.validate(email)) {
-                // Put Http parameter username with value of Email Edit View control
-                params.put("username", email);
-                // Put Http parameter password with value of Password Edit Value control
-                params.put("password", password);
-                // Invoke RESTful Web Service with Http parameters
-                invokeWS(params);
+            //Hide Keypad after clicking Login Button
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+
+            // Get Email Edit View Value
+            String email = driverEmail.getText().toString();
+            // Get Password Edit View Value
+            String password = driverPassword.getText().toString();
+            // Instantiate Http Request Param Object
+            RequestParams params = new RequestParams();
+            // When Email Edit View and Password Edit View have values other than Null
+            if (Validation.isNotNull(email) && Validation.isNotNull(password)) {
+                // When Email entered is Valid
+                if (Validation.validate(email)) {
+                    // Put Http parameter username with value of Email Edit View control
+                    params.put("username", email);
+                    // Put Http parameter password with value of Password Edit Value control
+                    params.put("password", password);
+                    // Invoke RESTful Web Service with Http parameters
+                    invokeWS(params);
+                }
+                // When Email is invalid
+                else {
+                    Toast.makeText(getApplicationContext(), "Please enter valid email", Toast.LENGTH_LONG).show();
+                }
+            } else {
+                Toast.makeText(getApplicationContext(), "Please enter email and password", Toast.LENGTH_LONG).show();
             }
-            // When Email is invalid
-            else {
-                Toast.makeText(getApplicationContext(), "Please enter valid email", Toast.LENGTH_LONG).show();
-            }
-        } else {
-            Toast.makeText(getApplicationContext(), "Please fill the form, don't leave any field blank", Toast.LENGTH_LONG).show();
+        }
+        else {
+            AlertDialog.Builder dialog = new AlertDialog.Builder(DriverLoginActivity.this);
+            dialog.setMessage("No active internet connection. Turn on WiFi or enable mobile data connection");
+            dialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    dialog.cancel();
+                }
+            });
+            AlertDialog alert = dialog.create();
+            alert.show();
         }
     }
+
 
     @Override
     public void onBackPressed() {
@@ -106,7 +131,7 @@ public class DriverLoginActivity extends AppCompatActivity {
 
     public void invokeWS(RequestParams params) {
         // Show Progress Dialog
-       prgDialog.show();
+        prgDialog.show();
         // Make RESTful webservice call using AsyncHttpClient object
         AsyncHttpClient client = new AsyncHttpClient();
         client.post("http://saferide.nagkumar.com/login/", params, new AsyncHttpResponseHandler() {

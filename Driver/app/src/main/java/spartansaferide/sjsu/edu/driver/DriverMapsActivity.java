@@ -15,6 +15,8 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -90,6 +92,7 @@ public class DriverMapsActivity extends AppCompatActivity
     static String baseUrl = "http://saferide.nagkumar.com/";
     static JSONObject authObj;
     String sid;
+    ConnectivityManager cm;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -204,8 +207,6 @@ public class DriverMapsActivity extends AppCompatActivity
 
         if (id == R.id.logout) {
             logOut();
-//            Intent logout = new Intent(DriverMapsActivity.this, DriverLoginActivity.class);
-//            startActivity(logout);
             setResult(RESULT_OK, getIntent().putExtra("response","none"));
             Toast.makeText(this, "Logged Out", Toast.LENGTH_SHORT).show();
             finish();
@@ -318,32 +319,47 @@ public class DriverMapsActivity extends AppCompatActivity
     }
 
     public void updateRoute(String newRoute) {
-        //parse JSON
-        stops = new ArrayList<StopInformation>();
+        if(checkInternetExists()) {
+            //parse JSON
+            stops = new ArrayList<StopInformation>();
 
-        try {
-            JSONObject response = new JSONObject(newRoute);
-            JSONArray path = response.getJSONArray("route");
-            if (path.getString(0) != "null") {
-                for (int i = 1; i < path.length(); i++) {
-                    //new StopInformation
-                    StopInformation stop_obj = new StopInformation();
+            try {
+                JSONObject response = new JSONObject(newRoute);
+                JSONArray path = response.getJSONArray("route");
+                if (path.getString(0) != "null") {
+                    for (int i = 1; i < path.length(); i++) {
+                        //new StopInformation
+                        StopInformation stop_obj = new StopInformation();
 
-                    JSONObject obj = path.getJSONObject(i);
-                    stop_obj.type = obj.getString("type");
-                    Double location_lat = obj.getJSONObject("latLng").getDouble("lat");
-                    Double location_lng = obj.getJSONObject("latLng").getDouble("lng");
+                        JSONObject obj = path.getJSONObject(i);
+                        stop_obj.type = obj.getString("type");
+                        Double location_lat = obj.getJSONObject("latLng").getDouble("lat");
+                        Double location_lng = obj.getJSONObject("latLng").getDouble("lng");
 
-                    stop_obj.location = new LatLng(location_lat, location_lng);
+                        stop_obj.location = new LatLng(location_lat, location_lng);
 
-                    stop_obj.name = obj.getJSONObject("user").getString("first_name") + " " + obj.getJSONObject("user").getString("last_name");
-                    stop_obj.student_id = obj.getJSONObject("user").getString("sjsu_id");
-                    stops.add(stop_obj);
+                        stop_obj.name = obj.getJSONObject("user").getString("first_name") + " " + obj.getJSONObject("user").getString("last_name");
+                        stop_obj.student_id = obj.getJSONObject("user").getString("sjsu_id");
+                        stops.add(stop_obj);
+                    }
                 }
+                updateStops();
+            } catch (JSONException e) {
+                e.printStackTrace();
             }
-            updateStops();
-        } catch (JSONException e) {
-            e.printStackTrace();
+        }
+        else{
+            AlertDialog.Builder dialog = new AlertDialog.Builder(DriverMapsActivity.this);
+            dialog.setMessage("No active internet connection. Turn on WiFi or enable mobile data connection");
+            dialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    dialog.cancel();
+                }
+            });
+            AlertDialog alert = dialog.create();
+            alert.show();
         }
     }
 
@@ -381,56 +397,83 @@ public class DriverMapsActivity extends AppCompatActivity
     }
 
     public void updateStops() {
-        //To populate this list from the MapQuest JSON response
-        clearMap();
-        Geocoder geocoder = new Geocoder(getApplicationContext(), Locale.getDefault());
-        stoparr = new ArrayList<String>();
 
-        for (StopInformation i : stops) {
-            try {
-                listAddresses = geocoder.getFromLocation(i.location.latitude, i.location.longitude, 1);
+        if(checkInternetExists()) {
+            //To populate this list from the MapQuest JSON response
+            clearMap();
+            Geocoder geocoder = new Geocoder(getApplicationContext(), Locale.getDefault());
+            stoparr = new ArrayList<String>();
 
-                stoparr.add((i.type.toUpperCase() + "," + i.student_id + "," + i.name.toUpperCase()));
+            for (StopInformation i : stops) {
+                try {
+                    listAddresses = geocoder.getFromLocation(i.location.latitude, i.location.longitude, 1);
 
-            } catch (IOException e) {
-                e.printStackTrace();
+                    stoparr.add((i.type.toUpperCase() + "," + i.student_id + "," + i.name.toUpperCase()));
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
+
+            ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(
+                    this,
+                    android.R.layout.simple_list_item_1,
+                    stoparr);
+
+            rides.setAdapter(arrayAdapter);
+            rides.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+                    String item = (String) parent.getItemAtPosition(position);
+                    Log.i("Position", "Item Clicked" + id);
+                    //  Toast.makeText(DriverMapsActivity.this, "Option Selected: " + item, Toast.LENGTH_LONG).show();
+
+                    sid = stops.get(position).student_id;
+
+                    displayPoints(position);
+                }
+            });
+
+            rides.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+                @Override
+                public boolean onItemLongClick(AdapterView<?> adapterView, View view, int i, long l) {
+
+                    LatLng navigate_loc = stops.get(i).location;
+
+                    Uri gmmIntentUri = Uri.parse("google.navigation:q=" + navigate_loc.latitude + "," + navigate_loc.longitude);
+                    Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
+                    mapIntent.setPackage("com.google.android.apps.maps");
+                    startActivity(mapIntent);
+
+                    return true;
+                }
+            });
         }
+        else {
+            AlertDialog.Builder dialog = new AlertDialog.Builder(DriverMapsActivity.this);
+            dialog.setMessage("No active internet connection. Turn on WiFi or enable mobile data connection");
+            dialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
 
-        ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(
-                this,
-                android.R.layout.simple_list_item_1,
-                stoparr);
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    dialog.cancel();
+                }
+            });
+            AlertDialog alert = dialog.create();
+            alert.show();
+        }
+    }
 
-        rides.setAdapter(arrayAdapter);
-        rides.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
-                String item = (String) parent.getItemAtPosition(position);
-                Log.i("Position", "Item Clicked" + id);
-                //  Toast.makeText(DriverMapsActivity.this, "Option Selected: " + item, Toast.LENGTH_LONG).show();
-
-                sid = stops.get(position).student_id;
-
-                displayPoints(position);
-            }
-        });
-
-        rides.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-            @Override
-            public boolean onItemLongClick(AdapterView<?> adapterView, View view, int i, long l) {
-
-                LatLng navigate_loc = stops.get(i).location;
-
-                Uri gmmIntentUri = Uri.parse("google.navigation:q=" + navigate_loc.latitude + "," + navigate_loc.longitude);
-                Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
-                mapIntent.setPackage("com.google.android.apps.maps");
-                startActivity(mapIntent);
-
-                return true;
-            }
-        });
+    public boolean checkInternetExists() {
+        cm = (ConnectivityManager) this.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        if (activeNetwork != null && activeNetwork.isConnectedOrConnecting()) {
+            return true;
+        }
+        else
+            return false;
     }
 
     public void clearMap() {
@@ -457,13 +500,31 @@ public class DriverMapsActivity extends AppCompatActivity
                     .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
         }
 
-        // Getting URL to the Google Directions API
-        String url = getDirectionsUrl(current_location, dest);
+        if(checkInternetExists()) {
 
-        DownloadTask downloadTask = new DownloadTask();
+            // Getting URL to the Google Directions API
+            String url = getDirectionsUrl(current_location, dest);
 
-        // Start downloading json data from Google Directions API
-        downloadTask.execute(url);
+            DownloadTask downloadTask = new DownloadTask();
+
+            // Start downloading json data from Google Directions API
+            downloadTask.execute(url);
+        }
+        else {
+
+            AlertDialog.Builder dialog = new AlertDialog.Builder(DriverMapsActivity.this);
+            dialog.setMessage("No active internet connection. Turn on WiFi or enable mobile data connection");
+            dialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    dialog.cancel();
+                }
+            });
+            AlertDialog alert = dialog.create();
+            alert.show();
+
+        }
     }
 
     @Override
@@ -597,110 +658,144 @@ public class DriverMapsActivity extends AppCompatActivity
         // Executes in UI thread, after the parsing process
         @Override
         protected void onPostExecute(List<List<HashMap<String, String>>> result) {
-            ArrayList<LatLng> myPoints = null;
-            PolylineOptions myLineOptions = null;
 
-            // Traversing through all the routes
-            for (int i = 0; i < result.size(); i++) {
-                myPoints = new ArrayList<LatLng>();
-                myLineOptions = new PolylineOptions();
+            if (checkInternetExists()) {
+                ArrayList<LatLng> myPoints = null;
+                PolylineOptions myLineOptions = null;
 
-                // Fetching i-th route
-                List<HashMap<String, String>> path = result.get(i);
+                // Traversing through all the routes
+                for (int i = 0; i < result.size(); i++) {
+                    myPoints = new ArrayList<LatLng>();
+                    myLineOptions = new PolylineOptions();
 
-                // Fetching all the points in i-th route
-                for (int j = 0; j < path.size(); j++) {
-                    HashMap<String, String> point = path.get(j);
+                    // Fetching i-th route
+                    List<HashMap<String, String>> path = result.get(i);
 
-                    double lat = Double.parseDouble(point.get("lat"));
-                    double lng = Double.parseDouble(point.get("lng"));
-                    LatLng position = new LatLng(lat, lng);
+                    // Fetching all the points in i-th route
+                    for (int j = 0; j < path.size(); j++) {
+                        HashMap<String, String> point = path.get(j);
 
-                    myPoints.add(position);
+                        double lat = Double.parseDouble(point.get("lat"));
+                        double lng = Double.parseDouble(point.get("lng"));
+                        LatLng position = new LatLng(lat, lng);
+
+                        myPoints.add(position);
+                    }
+
+                    // Adding all the points in the route to LineOptions
+                    myLineOptions.addAll(myPoints);
+                    myLineOptions.width(10);
+                    myLineOptions.color(Color.BLUE);
                 }
 
-                // Adding all the points in the route to LineOptions
-                myLineOptions.addAll(myPoints);
-                myLineOptions.width(10);
-                myLineOptions.color(Color.BLUE);
+                // Drawing polyline in the Google Map for the i-th route
+                mMap.addPolyline(myLineOptions);
             }
-
-            // Drawing polyline in the Google Map for the i-th route
-            mMap.addPolyline(myLineOptions);
         }
     }
 
     public void makePutCall(String student_id, String api) throws JSONException, UnsupportedEncodingException {
 
-        JSONObject student = new JSONObject();
-        student.put("sjsu_id", student_id);
-        AsyncHttpClient client = new AsyncHttpClient();
-        StringEntity entity = new StringEntity(student.toString());
-        client.addHeader("Authorization", "Token " + DriverMapsActivity.authObj.getString("token"));
-        client.addHeader("Content-Type", "application/json");
-        client.addHeader("Accept", "application/json");
+        if(checkInternetExists()) {
 
-        client.put(context, baseUrl + api, entity, "application/json", new JsonHttpResponseHandler() {
+            JSONObject student = new JSONObject();
+            student.put("sjsu_id", student_id);
+            AsyncHttpClient client = new AsyncHttpClient();
+            StringEntity entity = new StringEntity(student.toString());
+            client.addHeader("Authorization", "Token " + DriverMapsActivity.authObj.getString("token"));
+            client.addHeader("Content-Type", "application/json");
+            client.addHeader("Accept", "application/json");
 
-            @Override
-            public void onSuccess(int statusCode, Header[] headers, JSONObject responseBody) {
+            client.put(context, baseUrl + api, entity, "application/json", new JsonHttpResponseHandler() {
 
-                Log.d("Return Status", "Status Code: b.b@sjsu.edu    " + statusCode);
-                updateRoute(responseBody.toString());
-            }
+                @Override
+                public void onSuccess(int statusCode, Header[] headers, JSONObject responseBody) {
 
-            @Override
-            public void onFailure(int statusCode, Header[] headers, Throwable error, JSONObject responseBody) {
-
-                // When Http response code is '404'
-                if (statusCode == 404) {
-                    Toast.makeText(getApplicationContext(), "Requested resource not found", Toast.LENGTH_LONG).show();
+                    Log.d("Return Status", "Status Code: b.b@sjsu.edu    " + statusCode);
+                    updateRoute(responseBody.toString());
                 }
-                // When Http response code is '500'
-                else if (statusCode == 500) {
-                    Toast.makeText(getApplicationContext(), "Something went wrong at server end", Toast.LENGTH_LONG).show();
+
+                @Override
+                public void onFailure(int statusCode, Header[] headers, Throwable error, JSONObject responseBody) {
+
+                    // When Http response code is '404'
+                    if (statusCode == 404) {
+                        Toast.makeText(getApplicationContext(), "Requested resource not found", Toast.LENGTH_LONG).show();
+                    }
+                    // When Http response code is '500'
+                    else if (statusCode == 500) {
+                        Toast.makeText(getApplicationContext(), "Something went wrong at server end", Toast.LENGTH_LONG).show();
+                    }
+                    // When Http response code other than 404, 500
+                    else {
+                        Toast.makeText(getApplicationContext(), "Unexpected Error occcured! [Most common Error: Device might not be connected to Internet or remote server is not up and running]", Toast.LENGTH_LONG).show();
+                    }
                 }
-                // When Http response code other than 404, 500
-                else {
-                    Toast.makeText(getApplicationContext(), "Unexpected Error occcured! [Most common Error: Device might not be connected to Internet or remote server is not up and running]", Toast.LENGTH_LONG).show();
+            });
+        }
+        else {
+            AlertDialog.Builder dialog = new AlertDialog.Builder(DriverMapsActivity.this);
+            dialog.setMessage("No active internet connection. Turn on WiFi or enable mobile data connection");
+            dialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    dialog.cancel();
                 }
-            }
-        });
+            });
+            AlertDialog alert = dialog.create();
+            alert.show();
+        }
     }
 
     public void makePostCall(JSONObject params, JSONObject authObj, String api) throws JSONException, UnsupportedEncodingException {
 
-        AsyncHttpClient client = new AsyncHttpClient();
-        StringEntity entity = new StringEntity(params.toString());
+        if(checkInternetExists()) {
+            AsyncHttpClient client = new AsyncHttpClient();
+            StringEntity entity = new StringEntity(params.toString());
 
-        client.addHeader("Authorization", "Token " + authObj.getString("token"));
-        client.addHeader("Content-Type", "application/json");
-        client.addHeader("Accept", "application/json");
+            client.addHeader("Authorization", "Token " + authObj.getString("token"));
+            client.addHeader("Content-Type", "application/json");
+            client.addHeader("Accept", "application/json");
 
-        client.post(context, baseUrl + api, entity, "application/json", new AsyncHttpResponseHandler() {
+            client.post(context, baseUrl + api, entity, "application/json", new AsyncHttpResponseHandler() {
 
-            @Override
-            public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
-                Log.d("Return Status", "Status Code: " + statusCode);
-            }
-
-            @Override
-            public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
-
-                // When Http response code is '404'
-                if (statusCode == 404) {
-                    Toast.makeText(getApplicationContext(), "Requested resource not found", Toast.LENGTH_LONG).show();
+                @Override
+                public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
+                    Log.d("Return Status", "Status Code: " + statusCode);
                 }
-                // When Http response code is '500'
-                else if (statusCode == 500) {
-                    Toast.makeText(getApplicationContext(), "Something went wrong at server end", Toast.LENGTH_LONG).show();
+
+                @Override
+                public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
+
+                    // When Http response code is '404'
+                    if (statusCode == 404) {
+                        Toast.makeText(getApplicationContext(), "Requested resource not found", Toast.LENGTH_LONG).show();
+                    }
+                    // When Http response code is '500'
+                    else if (statusCode == 500) {
+                        Toast.makeText(getApplicationContext(), "Something went wrong at server end", Toast.LENGTH_LONG).show();
+                    }
+                    // When Http response code other than 404, 500
+                    else {
+                        Toast.makeText(getApplicationContext(), "Unexpected Error occcured! Device might not be connected to Internet or remote server is not up and running]", Toast.LENGTH_LONG).show();
+                    }
                 }
-                // When Http response code other than 404, 500
-                else {
-                    Toast.makeText(getApplicationContext(), "Unexpected Error occcured! [Most common Error: Device might not be connected to Internet or remote server is not up and running]", Toast.LENGTH_LONG).show();
+            });
+        }
+        else {
+            AlertDialog.Builder dialog = new AlertDialog.Builder(DriverMapsActivity.this);
+            dialog.setMessage("No active internet connection. Turn on WiFi or enable mobile data connection");
+            dialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    dialog.cancel();
                 }
-            }
-        });
+            });
+            AlertDialog alert = dialog.create();
+            alert.show();
+        }
     }
 
     public void createthread() {
