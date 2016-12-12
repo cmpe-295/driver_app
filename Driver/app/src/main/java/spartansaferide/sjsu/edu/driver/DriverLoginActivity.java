@@ -158,7 +158,10 @@ public class DriverLoginActivity extends AppCompatActivity {
                 // Hide Progress Dialog
                 prgDialog.hide();
                 // When Http response code is '404'
-                if (statusCode == 404) {
+                if (statusCode == 400) {
+                    Toast.makeText(getApplicationContext(), "Incorrect Username/Password", Toast.LENGTH_LONG).show();
+                }
+                else if (statusCode == 404) {
                     Toast.makeText(getApplicationContext(), "Requested resource not found", Toast.LENGTH_LONG).show();
                 }
                 // When Http response code is '500'
